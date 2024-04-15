@@ -7,3 +7,9 @@ Specific settings for EOS are included.
 
 Tired of the Advanced Sessions Plugin? <br>
 This is the new one, much more modular and should workd right out of the box.
+
+
+## Supported actions:
+- Login Common User
+- Find Online/Offline Sessions
+- Create Online/Offline Sessions
