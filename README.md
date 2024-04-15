@@ -5,5 +5,5 @@ CommonOnlineSessions Subsystem that helps communication with the online subsyste
 Supports STEAM and EOS
 Specific settings for EOS are included.
 
-Tired of the Advanced Sessions Plugin?
+Tired of the Advanced Sessions Plugin? <br>
 This is the new one, much more modular and should workd right out of the box.
