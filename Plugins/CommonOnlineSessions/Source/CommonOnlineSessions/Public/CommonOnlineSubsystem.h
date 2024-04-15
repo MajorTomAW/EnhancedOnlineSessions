@@ -231,6 +231,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Online|Common Sessions|Sessions")
 	virtual void CreateOnlineSession(APlayerController* HostingPlayer, UCommonOnline_CreateSessionRequest* CreateSessionRequest);
 
+	/** Finds online sessions that match the specified search settings */
 	UFUNCTION(BlueprintCallable, Category = "Online|Common Sessions|Sessions")
 	virtual void FindOnlineSessions(APlayerController* PlayerSearching, UCommonOnline_FindSessionsRequest* FindSessionsRequest);
 
