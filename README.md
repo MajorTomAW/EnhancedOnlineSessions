@@ -7,7 +7,12 @@ Supports STEAM and EOS
 Specific settings for EOS are included.
 
 Tired of the Advanced Sessions Plugin? <br>
-This is the new one, much more modular and should workd right out of the box.
+This is the new one! <br>
+Much more modular and should work right out of the box.
+
+My goal was to make this plugin as modular as possible that it should work with any other project.
+
+The entire online service logic is stored into a custom GameInstanceSubsystem.
 
 
 ## Supported actions:
