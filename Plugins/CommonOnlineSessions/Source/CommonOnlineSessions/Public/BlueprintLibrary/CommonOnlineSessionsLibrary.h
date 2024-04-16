@@ -7,6 +7,8 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "CommonOnlineSessionsLibrary.generated.h"
 
+class UCommonOnline_GetFriendsListRequest;
+class UCommonOnline_LogoutUserRequest;
 class UCommonOnlineSearchResult;
 class UCommonOnline_FindSessionsRequest;
 class UCommonOnlineRequest;
@@ -19,7 +21,7 @@ class UCommonOnline_LoginUserRequest;
 DECLARE_DYNAMIC_DELEGATE_OneParam(FBlueprintOnRequestFailedWithLog, const FString&, Log);
 DECLARE_DYNAMIC_DELEGATE_OneParam(FBlueprintOnLoginSuccess, int32, LocalPlayerIndex);
 DECLARE_DYNAMIC_DELEGATE_OneParam(FBlueprintOnOnFindSessionsSuccess, const TArray<UCommonOnlineSearchResult*>&, SearchResults);
-
+DECLARE_DYNAMIC_DELEGATE_OneParam(FBlueprintOnGetFriendsListSuccess, const TArray<FCommonOnlineFriendInfo>&, FriendsList);
 
 /**
  * Library that stores all the necessary functions for interacting with online sessions.
@@ -45,6 +47,17 @@ public:
 	static UPARAM(DisplayName = "Request") UCommonOnline_LoginUserRequest* ConstructOnlineLoginUserRequest(UObject* WorldContextObject, const FString UserID, const FString UserToken, const EAuthType AuthType, FBlueprintOnLoginSuccess OnSuccess, FBlueprintOnRequestFailedWithLog OnFailed);
 
 	/**
+	 * Creates a logout user request object that can be used to log out of an online service.
+	 * 
+	 * @param WorldContextObject		The world context object
+	 * @param OnFailed					The delegate that will be called if the request fails
+	 * @param OnSuccess					The delegate that will be called if the request succeeds
+	 * @return The logout user request object
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Online|Common Sessions|Identity", meta = (WorldContext = "WorldContextObject", Keywords = "Create, Make, New"))
+	static UPARAM(DisplayName = "Request") UCommonOnline_LogoutUserRequest* ConstructOnlineLogoutUserRequest(UObject* WorldContextObject, FBlueprintOnRequestFailedWithLog OnFailed, FBlueprintOnEmptyIndexRequestSuccess OnSuccess);
+
+	/**
 	 * Creates a create session request object that can be used to create a new session.
 	 * 
 	 * @param WorldContextObject		The world context object
@@ -55,12 +68,13 @@ public:
 	 * @param SearchKeyword				The search keyword that will be used to find the session
 	 * @param bUseLobbiesIfAvailable	Whether to use lobbies if available
 	 * @param bUseVoiceChatIfAvailable	Whether to use voice chat if available
+	 * @param bUseServerTravelOnSuccess	Whether to use server travel on success, EOS does require it while Steam works better without
 	 * @param StoredSettings			The stored settings that will be used for the session
 	 * @param OnFailed					The delegate that will be called if the request fails
 	 * @return The create session request object
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Online|Common Sessions|Sessions", meta = (WorldContext = "WorldContextObject", Keywords = "Create, Make, New", AdvancedDisplay = "SearchKeyword, bEnabledVoiceChatIfAvailable, StoredSettings", AutoCreateRefTerm = "StoredSettings", MaxPlayerCount = 10, MapID  = "None", OnlineMode = "Online", SessionFriendlyName = "", GameModeFriendlyName = "", SearchKeyword = "", bUseLobbiesIfAvailable = "true", bUseVoiceChatIfAvailable = "false", StoredSettings = "None"))
-	static UPARAM(DisplayName = "Request") UCommonOnline_CreateSessionRequest* ConstructOnlineCreateSessionRequest(UObject* WorldContextObject, int32 MaxPlayerCount, UPARAM(meta = (AllowedTypes = "Map")) FPrimaryAssetId MapID, ECommonSessionOnlineMode OnlineMode, FString SessionFriendlyName, FString GameModeFriendlyName, FString SearchKeyword, bool bUseLobbiesIfAvailable, bool bUseVoiceChatIfAvailable, FStoredSessionSettings StoredSettings, FBlueprintOnRequestFailedWithLog OnFailed);
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Online|Common Sessions|Sessions", meta = (WorldContext = "WorldContextObject", Keywords = "Create, Make, New", AdvancedDisplay = "SearchKeyword, bEnabledVoiceChatIfAvailable, StoredSettings", AutoCreateRefTerm = "StoredSettings", MaxPlayerCount = 10, MapID  = "None", OnlineMode = "Online", SessionFriendlyName = "", GameModeFriendlyName = "", SearchKeyword = "", bUseLobbiesIfAvailable = "true", bUseServerTravelOnSuccess = "true", bUseVoiceChatIfAvailable = "false", StoredSettings = "None"))
+	static UPARAM(DisplayName = "Request") UCommonOnline_CreateSessionRequest* ConstructOnlineCreateSessionRequest(UObject* WorldContextObject, int32 MaxPlayerCount, UPARAM(meta = (AllowedTypes = "Map")) FPrimaryAssetId MapID, ECommonSessionOnlineMode OnlineMode, FString SessionFriendlyName, FString GameModeFriendlyName, FString SearchKeyword, bool bUseLobbiesIfAvailable, bool bUseVoiceChatIfAvailable, /* Disable when using STEAM */ bool bUseServerTravelOnSuccess, FStoredSessionSettings StoredSettings, FBlueprintOnRequestFailedWithLog OnFailed);
 
 	/**
 	 * Invalidates the given request object.
@@ -84,4 +98,19 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Online|Common Sessions|Sessions", meta = (WorldContext = "WorldContextObject", Keywords = "Create, Make, New", MaxNumResults = -1, OnlineMode = "Online", bSearchLobbies = "true"))
 	static UPARAM(DisplayName = "Request") UCommonOnline_FindSessionsRequest* ConstructOnlineFindSessionsRequest(UObject* WorldContextObject, int32 MaxNumResults, ECommonSessionOnlineMode OnlineMode, bool bSearchLobbies, FBlueprintOnOnFindSessionsSuccess OnSuccess, FBlueprintOnRequestFailedWithLog OnFailed);
+
+	/**
+	 * Creates a get friends list request object that can be used to get the friends list.
+	 * 
+	 * @param WorldContextObject		The world context object
+	 * @param OnlineFilter				The online filter that will be used to filter the friends list
+	 * @param OnSuccess					The delegate that will be called if the request succeeds
+	 * @param OnFailed					The delegate that will be called if the request fails
+	 * @return The get friends list request object
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Online|Common Sessions|Friends", meta = (WorldContext = "WorldContextObject", Keywords = "Create, Make, New", OnlineFilter = "All"))
+	static UPARAM(DisplayName = "Request") UCommonOnline_GetFriendsListRequest* ConstructOnlineGetFriendsListRequest(UObject* WorldContextObject, ECommonFriendOnlineSateFilter OnlineFilter, FBlueprintOnGetFriendsListSuccess OnSuccess, FBlueprintOnRequestFailedWithLog OnFailed);
+
+private:
+	static void BindOnRequestFailedDelegate(UCommonOnlineRequest* Request, FBlueprintOnRequestFailedWithLog OnFailed);
 };

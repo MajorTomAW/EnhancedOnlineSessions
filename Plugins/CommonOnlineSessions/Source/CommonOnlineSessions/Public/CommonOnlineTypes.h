@@ -13,6 +13,11 @@
 #include "CommonOnlineTypes.generated.h"
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnRequestFailedWithLog, const FString& Log);
+DECLARE_MULTICAST_DELEGATE(FOnEmptyRequestSuccess)
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnEmptyIndexRequestSuccess, int32 LocalPlayerIndex);
+
+DECLARE_DYNAMIC_DELEGATE(FBlueprintOnEmptyRequestSuccess);
+DECLARE_DYNAMIC_DELEGATE_OneParam(FBlueprintOnEmptyIndexRequestSuccess, int32, LocalPlayerIndex);
 
 /** A key-value pair that can be passed to a session */
 USTRUCT(BlueprintType)
@@ -55,6 +60,99 @@ enum class ECommonSessionOnlineMode : uint8
 	Offline,
 	LAN,
 	Online
+};
+
+/** Specifies the current online presence state of a friend */
+UENUM(BlueprintType)
+enum class ECommonFriendOnlineSate : uint8
+{
+	Online,
+	Offline,
+	Away,
+	ExtendedAway,
+	DoNotDisturb,
+	Chat
+};
+
+/** Specifies the current online presence state filter of a friend */
+UENUM(BlueprintType)
+enum class ECommonFriendOnlineSateFilter : uint8
+{
+	Online,
+	Offline,
+	Away,
+	ExtendedAway,
+	DoNotDisturb,
+	Chat,
+	All
+};
+
+/** Blueprint exposed online friend presence info */
+USTRUCT(BlueprintType)
+struct FCommonOnlineFriendPresenceInfo
+{
+	GENERATED_BODY()
+
+	FCommonOnlineFriendPresenceInfo()
+		: bIsOnline(false)
+		, bIsPlaying(false)
+		, bIsPlayingThisGame(false)
+		, bIsJoinable(false)
+		, bHasVoiceSupport(false)
+		, StatusString(TEXT(""))
+	{
+	};
+
+public:
+	/** Whether this friend is online or not */
+	UPROPERTY(BlueprintReadOnly, Category = "Presence")
+	uint8 bIsOnline:1;
+
+	/** The current playing status of this friend */
+	UPROPERTY(BlueprintReadOnly, Category = "Presence")
+	uint8 bIsPlaying:1;
+
+	/** Whether this friend is playing the same game or not */
+	UPROPERTY(BlueprintReadOnly, Category = "Presence")
+	uint8 bIsPlayingThisGame:1;
+
+	/** Whether this friend is in a joinable session or not */
+	UPROPERTY(BlueprintReadOnly, Category = "Presence")
+	uint8 bIsJoinable:1;
+
+	/** Whether this friend is able to use voice chat or not */
+	UPROPERTY(BlueprintReadOnly, Category = "Presence")
+	uint8 bHasVoiceSupport:1;
+
+	/** Extra data about this friend's presence */
+	UPROPERTY(BlueprintReadOnly, Category = "Presence")
+	FString StatusString;
+};
+
+/** Blueprint exposed online friend struct */
+USTRUCT(BlueprintType)
+struct FCommonOnlineFriendInfo
+{
+	GENERATED_BODY()
+
+	FCommonOnlineFriendInfo() = default;
+
+public:
+	/** Display- or Nickname of this friend */
+	UPROPERTY(BlueprintReadOnly, Category = "Friend")
+	FString DisplayName;
+
+	/** Real name of this friend, if available */
+	UPROPERTY(BlueprintReadOnly, Category = "Friend")
+	FString RealName;
+
+	/** Online state of this friend */
+	UPROPERTY(BlueprintReadOnly, Category = "Friend")
+	ECommonFriendOnlineSate OnlineState;
+
+	/** Friend presence info */
+	UPROPERTY(BlueprintReadOnly, Category = "Friend")
+	FCommonOnlineFriendPresenceInfo PresenceInfo;
 };
 
 /** Detailed information about the online error */

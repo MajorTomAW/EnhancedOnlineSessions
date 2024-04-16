@@ -85,6 +85,35 @@ public:
 };
 
 /**
+ * An empty request object needed to log out of an online service.
+ */
+UCLASS(DisplayName = "Logout User Request")
+class UCommonOnline_LogoutUserRequest : public UCommonOnlineRequest
+{
+	GENERATED_BODY()
+
+public:
+	FOnEmptyIndexRequestSuccess OnLogoutUserSuccess;
+};
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnGetFriendsListComplete, const TArray<FCommonOnlineFriendInfo>& FriendsList);
+/**
+ * A request object that stores the settings needed to get the friends list of a user.
+ */
+UCLASS(DisplayName = "Get Friends List Request")
+class UCommonOnline_GetFriendsListRequest : public UCommonOnlineRequest
+{
+	GENERATED_BODY()
+
+public:
+	/** Online stat filter, used to only get friends that have a specific online state */
+	UPROPERTY(BlueprintReadWrite, Category = "Friends")
+	ECommonFriendOnlineSateFilter OnlineFilter;
+
+	FOnGetFriendsListComplete OnGetFriendsListComplete;
+};
+
+/**
  * A request object that stores the session settings needed to create a new session.
  */
 UCLASS(DisplayName = "Create Session Request")
@@ -125,6 +154,10 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Session", meta = (AllowedTypes = "World"))
 	FPrimaryAssetId MapID;
 
+	/** Whether to use server travel on success */
+	UPROPERTY(BlueprintReadWrite, Category = "Session")
+	bool bUseServerTravelOnSuccess = false;
+
 	/** Custom user data to pass to the session */
 	UPROPERTY(BlueprintReadWrite, Category = "Session")
 	FStoredSessionSettings StoredSettings;
@@ -137,7 +170,7 @@ public:
 	virtual FString GetMapName() const;
 
 	/** Constructs the full URL to travel to the session */
-	virtual FString ConstructTravelURL() const;
+	virtual FString ConstructTravelURL(bool bWithServerTravel = true) const;
 
 	/** Validates the request and logs any errors */
 	virtual bool ValidateAndLogErrors(FText& OutError) const;
@@ -250,6 +283,19 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Online|Common Sessions|Identity")
 	virtual void LoginOnlineUser(APlayerController* PlayerToLogin, UCommonOnline_LoginUserRequest* LoginRequest);
 
+	/** Logs out the specified user */
+	UFUNCTION(BlueprintCallable, Category = "Online|Common Sessions|Identity")
+	virtual void LogoutOnlineUser(APlayerController* PlayerToLogout, UCommonOnline_LogoutUserRequest* LogoutRequest);
+
+	/** Tries to get the user friends list of the online service */
+	UFUNCTION(BlueprintCallable, Category = "Online|Common Sessions|Friends")
+	virtual void GetOnlineFriendsList(APlayerController* PlayerRequesting, UCommonOnline_GetFriendsListRequest* FriendsRequest);
+
+
+
+
+	
+	
 	/** Creates a new online session with the specified settings */
 	UFUNCTION(BlueprintCallable, Category = "Online|Common Sessions|Sessions")
 	virtual void CreateOnlineSession(APlayerController* HostingPlayer, UCommonOnline_CreateSessionRequest* CreateSessionRequest);
@@ -268,14 +314,16 @@ public:
 
 protected:
 	virtual void BindOnlineDelegates();
-	virtual void LoginOnlineUserInternal(ULocalPlayer* LocalPlayer, UCommonOnline_LoginUserRequest* LoginRequest);
+
+	/** Online Sessions */
+	virtual void BindOnlineSessionDelegates(IOnlineSubsystem* OnlineSub);
+	virtual void RemoveOnlineSessionDelegates(IOnlineSubsystem* OnlineSub);
 	virtual void CreateOnlineSessionInternal(ULocalPlayer* LocalPlayer, UCommonOnline_CreateSessionRequest* CreateSessionRequest);
 	virtual void FindOnlineSessionsInternal(ULocalPlayer* LocalPlayer, const TSharedRef<FCommonOnlineSessionSearchSettings>& InSearchSettings);
 	virtual void JoinOnlineSessionInternal(ULocalPlayer* LocalPlayer, UCommonOnlineSearchResult* Session);
 	virtual void TravelToSessionInternal(const FName SessionName);
 	virtual void CleanupOnlineSessionsInternal();
 
-	virtual void OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error);
 	virtual void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
 	virtual void OnFindSessionsComplete(bool bWasSuccessful);
 	virtual void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
@@ -285,7 +333,25 @@ protected:
 	void NotifyUserRequestedSession(const FPlatformUserId& PlatformUserId, UCommonOnlineSearchResult* RequestedSession, const FOnlineResultInfo& ResultInfo);
 	void NotifyUserReceivedSessionInvite(const FUniqueNetId& ReceivedUserId, const FUniqueNetId& SendingUserId, UCommonOnlineSearchResult* InviteResult, const FOnlineResultInfo& ResultInfo);
 
+	/** Online Identity */
+	virtual void BindOnlineIdentityDelegates(IOnlineSubsystem* OnlineSub);
+	virtual void RemoveOnlineIdentityDelegates(IOnlineSubsystem* OnlineSub);
+	virtual void LoginOnlineUserInternal(ULocalPlayer* LocalPlayer, UCommonOnline_LoginUserRequest* LoginRequest);
+	virtual void LogoutOnlineUserInternal(ULocalPlayer* LocalPlayer, UCommonOnline_LogoutUserRequest* LogoutRequest);
+	virtual void GetOnlineFriendsListInternal(ULocalPlayer* LocalPlayer, UCommonOnline_GetFriendsListRequest* FriendsRequest);
+
+	virtual void OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error);
+	virtual void OnLoginStatusChanged(int32 LocalUserNum, ELoginStatus::Type OldStatus, ELoginStatus::Type NewStatus, const FUniqueNetId& UserId);
+	virtual void OnGetFriendsListComplete(int32 LocalUserNum, bool bWasSuccessful, const FString& ListName, const FString& ErrorString);
+	
+	void NotifyUserLoginComplete(int32 LocalUserNum, const FUniqueNetId& UserId, const FOnlineResultInfo& ResultInfo);
+	void NotifyUserLoginStatusChanged(int32 LocalUserNum, ELoginStatus::Type OldStatus, ELoginStatus::Type NewStatus, const FUniqueNetId& UserId);
+
 protected:
+	/** Pending friends list request which will be destroyed when finished */
+	UPROPERTY()
+	UCommonOnline_GetFriendsListRequest* PendingFriendsListRequest;
+	
 	/** Native delegate for modifying the travel URL before traveling to a session */
 	FCommonOnlineSessionOnPreClientTravel OnPreClientTravelEvent;
 	
