@@ -1,8 +1,8 @@
-# Common Online Sessions Plugin
+# Enhanced Online Sessions Plugin
 Unreal Engine Plugin used to manage an online subsystem <br>
 Developed with Unreal Engine 5.3
 
-CommonOnlineSessions Subsystem that helps communication with the online subsystem.
+EnhancedOnlineSessions Subsystem that helps communication with the online subsystem.
 Supports STEAM and EOS
 Specific settings for EOS are included.
 
