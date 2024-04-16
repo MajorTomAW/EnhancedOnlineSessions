@@ -1,8 +1,10 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+﻿// Copyright © 2024 MajorT. All rights reserved.
 
 #include "EnhancedOnlineSessions.h"
 
 #define LOCTEXT_NAMESPACE "FEnhancedOnlineSessionsModule"
+
+DEFINE_LOG_CATEGORY(LogEnhancedSubsystem)
 
 void FEnhancedOnlineSessionsModule::StartupModule()
 {
