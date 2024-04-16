@@ -124,10 +124,6 @@ FString UCommonOnlineSearchResult::GetSessionNameSafe() const
  * UCommonOnlineSubsystem															*
  ************************************************************************************/
 
-UCommonOnlineSubsystem::UCommonOnlineSubsystem()
-{
-}
-
 void UCommonOnlineSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
@@ -143,8 +139,12 @@ void UCommonOnlineSubsystem::BindOnlineDelegates()
 	const IOnlineIdentityPtr Identity = OnlineSub->GetIdentityInterface();
 	check(Sessions.IsValid() && Identity.IsValid());
 
+	// Bind to the session delegates
 	Sessions->AddOnCreateSessionCompleteDelegate_Handle(FOnCreateSessionCompleteDelegate::CreateUObject(this, &ThisClass::OnCreateSessionComplete));
 	Sessions->AddOnFindSessionsCompleteDelegate_Handle(FOnFindSessionsCompleteDelegate::CreateUObject(this, &ThisClass::OnFindSessionsComplete));
+	Sessions->AddOnJoinSessionCompleteDelegate_Handle(FOnJoinSessionCompleteDelegate::CreateUObject(this, &ThisClass::OnJoinSessionComplete));
+	Sessions->AddOnSessionUserInviteAcceptedDelegate_Handle(FOnSessionUserInviteAcceptedDelegate::CreateUObject(this, &ThisClass::OnSessionUserInviteAccepted));
+	Sessions->AddOnSessionInviteReceivedDelegate_Handle(FOnSessionInviteReceivedDelegate::CreateUObject(this, &ThisClass::OnSessionInviteReceived));
 
 	// Bind to the login complete delegate for all local players
 	for (int32 PlayerIndex = 0; PlayerIndex < MAX_LOCAL_PLAYERS; PlayerIndex++)
@@ -155,6 +155,24 @@ void UCommonOnlineSubsystem::BindOnlineDelegates()
 
 void UCommonOnlineSubsystem::Deinitialize()
 {
+	// Remove all delegate bindings
+	IOnlineSubsystem* OnlineSub = Online::GetSubsystem(GetWorld());
+	if (OnlineSub)
+	{
+		const IOnlineSessionPtr Sessions = OnlineSub->GetSessionInterface();
+		if (Sessions)
+		{
+			Sessions->ClearOnSessionFailureDelegates(this);
+		}
+	}
+
+	if (GEngine)
+	{
+		GEngine->OnTravelFailure().RemoveAll(this);
+	}
+
+	FCoreUObjectDelegates::PostLoadMapWithWorld.RemoveAll(this);
+
 	Super::Deinitialize();
 }
 
@@ -167,19 +185,80 @@ bool UCommonOnlineSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 	return SubClasses.Num() == 0;
 }
 
+#pragma region session_invites
+void UCommonOnlineSubsystem::OnSessionUserInviteAccepted(const bool bWasSuccessful, const int32 ControllerId, FUniqueNetIdPtr AcceptingUserId, const FOnlineSessionSearchResult& InviteResult)
+{
+	FPlatformUserId PlatformUserId = IPlatformInputDeviceMapper::Get().GetPlatformUserForUserIndex(ControllerId);
+	UCommonOnlineSearchResult* RequestedSession = nullptr;
+	FOnlineResultInfo ResultInfo;
+
+	if (bWasSuccessful)
+	{
+		RequestedSession = NewObject<UCommonOnlineSearchResult>(this);
+		RequestedSession->Result = InviteResult;
+	}
+	else
+	{
+		ResultInfo.bWasSuccessful = false;
+		ResultInfo.ErrorId = TEXT("SessionInviteFailed");
+		ResultInfo.ErrorMessage = TEXT("Failed to accept session invite");
+	}
+
+	NotifyUserRequestedSession(PlatformUserId, RequestedSession, ResultInfo);
+}
+
+void UCommonOnlineSubsystem::NotifyUserRequestedSession(const FPlatformUserId& PlatformUserId, UCommonOnlineSearchResult* RequestedSession, const FOnlineResultInfo& ResultInfo)
+{
+	OnUserRequestedSessionEvent.Broadcast(PlatformUserId, RequestedSession, ResultInfo);
+	K2_OnUserRequestedSessionEvent.Broadcast(PlatformUserId, RequestedSession, ResultInfo);
+}
+
+void UCommonOnlineSubsystem::OnSessionInviteReceived(const FUniqueNetId& ReceivedUserId, const FUniqueNetId& SendingUserId, const FString& AppId, const FOnlineSessionSearchResult& InviteResult)
+{
+	UCommonOnlineSearchResult* RequestedSession = nullptr;
+	FOnlineResultInfo ResultInfo;
+
+	if (InviteResult.IsValid())
+	{
+		RequestedSession = NewObject<UCommonOnlineSearchResult>(this);
+		RequestedSession->Result = InviteResult;
+	}
+	else
+	{
+		ResultInfo.bWasSuccessful = false;
+		ResultInfo.ErrorId = TEXT("SessionInviteFailed");
+		ResultInfo.ErrorMessage = TEXT("Failed to receive session invite");
+	}
+
+	NotifyUserReceivedSessionInvite(ReceivedUserId, SendingUserId, RequestedSession, ResultInfo);
+}
+
+void UCommonOnlineSubsystem::NotifyUserReceivedSessionInvite(const FUniqueNetId& ReceivedUserId, const FUniqueNetId& SendingUserId, UCommonOnlineSearchResult* InviteResult, const FOnlineResultInfo& ResultInfo)
+{
+	OnUserReceivedSessionInviteEvent.Broadcast(ReceivedUserId, SendingUserId, InviteResult, ResultInfo);
+
+	FUniqueNetIdRepl ReceivedUserIdRepl(ReceivedUserId);
+	FUniqueNetIdRepl SendingUserIdRepl(SendingUserId);
+	K2_OnUserReceivedSessionInviteEvent.Broadcast(ReceivedUserIdRepl, SendingUserIdRepl, InviteResult, ResultInfo);
+}
+#pragma endregion
+
 #pragma region login_online_user
 void UCommonOnlineSubsystem::LoginOnlineUser(APlayerController* PlayerToLogin, UCommonOnline_LoginUserRequest* LoginRequest)
 {
+	// Make sure the request is valid
 	if (LoginRequest == nullptr)
 	{
 		LoginRequest->OnFailed.Broadcast(TEXT("Login Online User was called with a bad request"));
 		return;
 	}
 
+	// Get the local player and return if it's invalid
 	ULocalPlayer* LocalPlayer = (PlayerToLogin != nullptr) ? PlayerToLogin->GetLocalPlayer() : nullptr;
 	if (LocalPlayer == nullptr)
 	{
 		LoginRequest->OnFailed.Broadcast(TEXT("Unable to find local player"));
+		return;
 	}
 
 	LoginOnlineUserInternal(LocalPlayer, LoginRequest);
@@ -197,11 +276,13 @@ void UCommonOnlineSubsystem::LoginOnlineUserInternal(ULocalPlayer* LocalPlayer, 
 	FString AuthTypeString;
 	StaticEnum<EAuthType>()->FindNameStringByValue(AuthTypeString, static_cast<int64>(AuthType));
 
+	// Create the credentials
 	FOnlineAccountCredentials Credentials;
 	Credentials.Type = AuthTypeString;
 	Credentials.Id = LoginRequest->UserId;
 	Credentials.Token = LoginRequest->UserToken;
 
+	// Bind to the delegate which lives on the LoginRequest
 	Identity->OnLoginCompleteDelegates->AddLambda(
 		[this, LoginRequest] (int32 LocalUserIndex, bool bWasSuccessful, const FUniqueMessageId& UserId, const FString& Error)
 		{
@@ -226,12 +307,14 @@ void UCommonOnlineSubsystem::OnLoginComplete(int32 LocalUserNum, bool bWasSucces
 #pragma region create_online_session
 void UCommonOnlineSubsystem::CreateOnlineSession(APlayerController* HostingPlayer, UCommonOnline_CreateSessionRequest* CreateSessionRequest)
 {
+	// Make sure the request is valid
 	if (CreateSessionRequest == nullptr)
 	{
 		CreateSessionRequest->OnFailed.Broadcast(TEXT("Create Online Session was called with a bad request"));
 		return;
 	}
 
+	// Get the local player and return if it's invalid
 	ULocalPlayer* LocalPlayer = (HostingPlayer != nullptr) ? HostingPlayer->GetLocalPlayer() : nullptr;
 	if (LocalPlayer == nullptr)
 	{
@@ -239,6 +322,7 @@ void UCommonOnlineSubsystem::CreateOnlineSession(APlayerController* HostingPlaye
 		return;
 	}
 
+	// Validate the request
 	FText OutError;
 	if (!CreateSessionRequest->ValidateAndLogErrors(OutError))
 	{
@@ -246,6 +330,7 @@ void UCommonOnlineSubsystem::CreateOnlineSession(APlayerController* HostingPlaye
 		return;
 	}
 
+	// If we're hosting an offline game, just travel to the map
 	if (CreateSessionRequest->OnlineMode == ECommonSessionOnlineMode::Offline)
 	{
 		if (GetWorld()->GetNetMode() == NM_Client)
@@ -328,6 +413,7 @@ void UCommonOnlineSubsystem::CreateOnlineSessionInternal(ULocalPlayer* LocalPlay
 
 void UCommonOnlineSubsystem::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
 {
+	// If the session was created successfully, travel to the map
 	if (bWasSuccessful)
 	{
 		LastOnlineResult = FOnlineResultInfo();
@@ -398,12 +484,14 @@ public:
 
 void UCommonOnlineSubsystem::FindOnlineSessions(APlayerController* PlayerSearching, UCommonOnline_FindSessionsRequest* FindSessionsRequest)
 {
+	// Make sure the request is valid
 	if (FindSessionsRequest == nullptr)
 	{
 		FindSessionsRequest->OnFailed.Broadcast(TEXT("Find Online Sessions was called with a bad request"));
 		return;
 	}
 
+	// Get the local player and return if it's invalid
 	ULocalPlayer* LocalPlayer = (PlayerSearching != nullptr) ? PlayerSearching->GetLocalPlayer() : nullptr;
 	if (LocalPlayer == nullptr)
 	{
@@ -452,6 +540,7 @@ void UCommonOnlineSubsystem::OnFindSessionsComplete(bool bWasSuccessful)
 		return;
 	}
 
+	// Store the search results into the search request if the search was successful
 	if (bWasSuccessful)
 	{
 		for (const FOnlineSessionSearchResult& Result : SearchSettings->SearchResults)
@@ -484,5 +573,142 @@ void UCommonOnlineSubsystem::OnFindSessionsComplete(bool bWasSuccessful)
 	}
 
 	SearchSettings.Reset();
+}
+#pragma endregion
+
+#pragma region join_online_session
+void UCommonOnlineSubsystem::JoinOnlineSession(APlayerController* JoiningPlayer, UCommonOnlineSearchResult* Session)
+{
+	// Make sure the session is valid
+	if (Session == nullptr)
+	{
+		UE_LOG(LogOnlineSession, Error, TEXT("Join Online Session was called with a bad session"));
+		return;
+	}
+
+	// Get the local player and return if it's invalid
+	ULocalPlayer* LocalPlayer = (JoiningPlayer != nullptr) ? JoiningPlayer->GetLocalPlayer() : nullptr;
+	if (LocalPlayer == nullptr)
+	{
+		UE_LOG(LogOnlineSession, Error, TEXT("Unable to find local player"));
+		return;
+	}
+
+	JoinOnlineSessionInternal(LocalPlayer, Session);
+}
+
+void UCommonOnlineSubsystem::JoinOnlineSessionInternal(ULocalPlayer* LocalPlayer, UCommonOnlineSearchResult* Session)
+{
+	IOnlineSubsystem* OnlineSub = Online::GetSubsystem(GetWorld());
+	check(OnlineSub);
+
+	IOnlineSessionPtr Sessions = OnlineSub->GetSessionInterface();
+	check(Sessions.IsValid());
+
+	Sessions->JoinSession(*LocalPlayer->GetPreferredUniqueNetId().GetUniqueNetId(), NAME_GameSession, Session->Result);
+}
+
+void UCommonOnlineSubsystem::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
+{
+	// If the session was joined successfully, travel to the map
+	if (Result == EOnJoinSessionCompleteResult::Success)
+	{
+		TravelToSessionInternal(SessionName);
+	}
+	else
+	{
+		FText ReturnReason;
+		switch (Result)
+		{
+		case EOnJoinSessionCompleteResult::SessionIsFull:
+			{
+				ReturnReason = NSLOCTEXT("NetworkErrors", "SessionIsFull", "Game is full.");
+				break;
+			}
+		case EOnJoinSessionCompleteResult::SessionDoesNotExist:
+			{
+				ReturnReason = NSLOCTEXT("NetworkErrors", "SessionDoesNotExist", "Game session does not exist.");
+				break;
+			}
+		default:
+			{
+				ReturnReason = NSLOCTEXT("NetworkErrors", "UnknownError", "Unknown error.");
+				break;
+			}
+		}
+
+		UE_LOG(LogOnlineSession, Error, TEXT("FinishJoinSession(%s) failed with Result: %s"), *SessionName.ToString(), *ReturnReason.ToString());
+	}
+}
+
+void UCommonOnlineSubsystem::TravelToSessionInternal(const FName SessionName)
+{
+	// Get the player controller and return if it's invalid
+	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+	if (PlayerController == nullptr)
+	{
+		FText ErrorText = NSLOCTEXT("NetworkErrors", "NoPlayerController", "No player controller found to travel to session.");
+		UE_LOG(LogOnlineSession, Error, TEXT("%s"), *ErrorText.ToString());
+		return;
+	}
+
+	FString TravelURL;
+
+	IOnlineSubsystem* OnlineSub = Online::GetSubsystem(GetWorld());
+	check(OnlineSub);
+
+	IOnlineSessionPtr Sessions = OnlineSub->GetSessionInterface();
+	check(Sessions.IsValid());
+
+	if (!Sessions->GetResolvedConnectString(SessionName, TravelURL))
+	{
+		FText ErrorText = NSLOCTEXT("NetworkErrors", "FailedToResolveConnectString", "Failed to resolve connect string for session.");
+		UE_LOG(LogOnlineSession, Error, TEXT("%s"), *ErrorText.ToString());
+		return;
+	}
+
+	// Client travel to the session URL
+	OnPreClientTravelEvent.Broadcast(TravelURL);
+	PlayerController->ClientTravel(TravelURL, TRAVEL_Absolute);
+}
+#pragma endregion
+
+#pragma region cleanup_online_sessions
+void UCommonOnlineSubsystem::CleanupOnlineSessions()
+{
+	bWantsToDestroyPendingSession = true;
+	SessionSettings.Reset();
+
+	CleanupOnlineSessionsInternal();
+}
+
+void UCommonOnlineSubsystem::CleanupOnlineSessionsInternal()
+{
+	IOnlineSubsystem* OnlineSub = Online::GetSubsystem(GetWorld());
+	check(OnlineSub);
+
+	IOnlineSessionPtr Sessions = OnlineSub->GetSessionInterface();
+	check(Sessions.IsValid());
+
+	EOnlineSessionState::Type SessionState = Sessions->GetSessionState(NAME_GameSession);
+	UE_LOG(LogOnlineSession, Log, TEXT("Session state is %s"), EOnlineSessionState::ToString(SessionState));
+
+	if (SessionState == EOnlineSessionState::InProgress)
+	{
+		UE_LOG(LogOnlineSession, Log, TEXT("Ending session"))
+		Sessions->EndSession(NAME_GameSession);
+	}
+	else if (SessionState == EOnlineSessionState::Ended || SessionState == EOnlineSessionState::Pending)
+	{
+		Sessions->DestroySession(NAME_GameSession);
+	}
+	else if (SessionState == EOnlineSessionState::Starting || SessionState == EOnlineSessionState::Creating)
+	{
+		UE_LOG(LogOnlineSession, Log, TEXT("Session is still starting or creating, waiting for it to finish"))
+	}
+	else
+	{
+		UE_LOG(LogOnlineSession, Log, TEXT("Session is in an unknown state, not sure what to do"))
+	}
 }
 #pragma endregion

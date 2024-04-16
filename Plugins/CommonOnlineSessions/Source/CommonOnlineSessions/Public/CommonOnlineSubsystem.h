@@ -4,15 +4,37 @@
 
 #include "CoreMinimal.h"
 #include "CommonOnlineTypes.h"
+#include "Interfaces/OnlineSessionInterface.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "CommonOnlineSubsystem.generated.h"
 
 class FCommonOnlineSessionSearchSettings;
+class UCommonOnlineSearchResult;
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FCommonOnlineSessionOnPreClientTravel, FString& /* Travel URL */);
+
+/**
+ * Delegate for when a user has accepted a session invite or requested to join a session
+ * @param Platform User Id		The platform user id of the user that requested the session, note that the user may not be logged in yet.
+ * @param Requested Session		The session that the user requested to join, this may be null if the session no longer exists.
+ * @param Result Info			The result info of the operation
+ */
+DECLARE_MULTICAST_DELEGATE_ThreeParams(FCommonOnlineSessionOnUserRequestedSession, const FPlatformUserId& /* Platform User Id */, UCommonOnlineSearchResult* /* Requested Session */, const FOnlineResultInfo& /* Result Info */);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FBlueprintCommonOnlineSessionOnUserRequestedSession, const FPlatformUserId&, PlatformUserId, UCommonOnlineSearchResult*, RequestedSession, const FOnlineResultInfo&, ResultInfo);
+
+/**
+ * Delegate for when a user has received a session invite
+ * @param Received User Id		The user id of the user that received the invite
+ * @param Sending User Id		The user id of the user that sent the invite
+ * @param Invite Result			The search result of the invite
+ */
+DECLARE_MULTICAST_DELEGATE_FourParams(FCommonOnlineSessionOnUserReceivedSessionInvite, const FUniqueNetId& /* Received User Id */, const FUniqueNetId& /* Sending User Id */, UCommonOnlineSearchResult* /* Invite Result */, const FOnlineResultInfo& /* Result Info */);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FBlueprintCommonOnlineSessionOnUserReceivedSessionInvite, const FUniqueNetIdRepl&, ReceivedUserId, const FUniqueNetIdRepl&, SendingUserId, UCommonOnlineSearchResult*, InviteResult, const FOnlineResultInfo&, ResultInfo);
 
 /************************************************************************************
  * Common Online Session Requests													*
  ************************************************************************************/
-
+#pragma region requests
 /**
  * A request object that can be used to interact with online services.
  */
@@ -200,6 +222,7 @@ public:
 	/** Called when the search is successful */
 	FOnFindSessionsSuccess OnFindSessionsSuccess;
 };
+#pragma endregion requests
 
 /************************************************************************************
  * UCommonOnlineSubsystem															*
@@ -215,7 +238,7 @@ class COMMONONLINESESSIONS_API UCommonOnlineSubsystem : public UGameInstanceSubs
 	GENERATED_BODY()
 
 public:
-	UCommonOnlineSubsystem();
+	UCommonOnlineSubsystem() {}
 
 	//~ Begin UGameInstanceSubsystem Interface
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
@@ -235,19 +258,56 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Online|Common Sessions|Sessions")
 	virtual void FindOnlineSessions(APlayerController* PlayerSearching, UCommonOnline_FindSessionsRequest* FindSessionsRequest);
 
+	/** Joins the specified online session */
+	UFUNCTION(BlueprintCallable, Category = "Online|Common Sessions|Sessions")
+	virtual void JoinOnlineSession(APlayerController* JoiningPlayer, UCommonOnlineSearchResult* Session);
+
+	/** Called to clean up any active sessions */
+	UFUNCTION(BlueprintCallable, Category = "Online|Common Sessions|Sessions")
+	virtual void CleanupOnlineSessions();
+
 protected:
 	virtual void BindOnlineDelegates();
 	virtual void LoginOnlineUserInternal(ULocalPlayer* LocalPlayer, UCommonOnline_LoginUserRequest* LoginRequest);
 	virtual void CreateOnlineSessionInternal(ULocalPlayer* LocalPlayer, UCommonOnline_CreateSessionRequest* CreateSessionRequest);
 	virtual void FindOnlineSessionsInternal(ULocalPlayer* LocalPlayer, const TSharedRef<FCommonOnlineSessionSearchSettings>& InSearchSettings);
+	virtual void JoinOnlineSessionInternal(ULocalPlayer* LocalPlayer, UCommonOnlineSearchResult* Session);
+	virtual void TravelToSessionInternal(const FName SessionName);
+	virtual void CleanupOnlineSessionsInternal();
 
 	virtual void OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error);
 	virtual void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
 	virtual void OnFindSessionsComplete(bool bWasSuccessful);
+	virtual void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
+	virtual void OnSessionUserInviteAccepted(const bool bWasSuccessful, const int32 ControllerId, FUniqueNetIdPtr AcceptingUserId, const FOnlineSessionSearchResult& InviteResult);
+	virtual void OnSessionInviteReceived(const FUniqueNetId& ReceivedUserId, const FUniqueNetId& SendingUserId, const FString& AppId, const FOnlineSessionSearchResult& InviteResult);
+
+	void NotifyUserRequestedSession(const FPlatformUserId& PlatformUserId, UCommonOnlineSearchResult* RequestedSession, const FOnlineResultInfo& ResultInfo);
+	void NotifyUserReceivedSessionInvite(const FUniqueNetId& ReceivedUserId, const FUniqueNetId& SendingUserId, UCommonOnlineSearchResult* InviteResult, const FOnlineResultInfo& ResultInfo);
 
 protected:
+	/** Native delegate for modifying the travel URL before traveling to a session */
+	FCommonOnlineSessionOnPreClientTravel OnPreClientTravelEvent;
+	
+	/** Native delegate for when a user has accepted a session invite, or requested to join a session */
+	FCommonOnlineSessionOnUserRequestedSession OnUserRequestedSessionEvent;
+
+	/** Native broadcast for when a user has accepted a session invite, or requested to join a session */
+	UPROPERTY(BlueprintAssignable, Category = "Online|Common Sessions|Events", meta = (DisplayName = "On User Requested Session"))
+	FBlueprintCommonOnlineSessionOnUserRequestedSession K2_OnUserRequestedSessionEvent;
+
+	/** Native delegate for when a user has received a session invite */
+	FCommonOnlineSessionOnUserReceivedSessionInvite OnUserReceivedSessionInviteEvent;
+
+	/** Native broadcast for when a user has received a session invite */
+	UPROPERTY(BlueprintAssignable, Category = "Online|Common Sessions|Events", meta = (DisplayName = "On User Received Session Invite"))
+	FBlueprintCommonOnlineSessionOnUserReceivedSessionInvite K2_OnUserReceivedSessionInviteEvent;
+	
 	/** The travel URL that will be used after session operations are complete */
 	FString PendingTravelURL;
+
+	/** Whether to destroy the pending session after the next operation */
+	bool bWantsToDestroyPendingSession = false;
 	
 	/** Most recent result info of the last online action */
 	FOnlineResultInfo LastOnlineResult;
