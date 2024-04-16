@@ -48,7 +48,7 @@ void UEnhancedOnlineSubsystem::CreateOnlineSession(UEnhancedOnlineRequest_Create
 			return;
 		}
 
-		GetWorld()->ServerTravel(Request->ConstructTravelURL());
+		GetWorld()->ServerTravel(Request->ConstructTravelURL(Request->bUseServerTravelOnSuccess));
 	}
 	else
 	{
@@ -77,10 +77,12 @@ void UEnhancedOnlineSubsystem::CreateOnlineSessionInternal(ULocalPlayer* LocalPl
 	{
 		SessionSettings = MakeShareable(new FEnhancedOnlineSessionSettings(Request->OnlineMode == EEnhancedSessionOnlineMode::LAN, bUsesPresence, MaxPlayers));
 		SessionSettings->bUseLobbiesIfAvailable = Request->bUseLobbiesIfAvailable;
+		SessionSettings->bUseLobbiesVoiceChatIfAvailable = Request->bUseVoiceChatIfAvailable;
 		SessionSettings->Set(SETTING_GAMEMODE, Request->AdvertisementGameModeName, EOnlineDataAdvertisementType::ViaOnlineService);
 		SessionSettings->Set(SETTING_MAPNAME, Request->GetFullMapName(), EOnlineDataAdvertisementType::ViaOnlineService);
 		SessionSettings->Set(SETTING_MATCHING_TIMEOUT, 120.0f, EOnlineDataAdvertisementType::ViaOnlineService);
 		SessionSettings->Set(SETTING_SESSION_TEMPLATE_NAME, FString(TEXT("GameSession")), EOnlineDataAdvertisementType::DontAdvertise);
+		SessionSettings->Set(SEARCH_KEYWORDS, Request->SearchKeyword, EOnlineDataAdvertisementType::ViaOnlineService);
 
 		FSessionSettings& UserSettings = SessionSettings->MemberSettings.Add(UserId.ToSharedRef(), FSessionSettings());
 		UserSettings.Add(SETTING_GAMEMODE, FOnlineSessionSetting(FString("GameSession"), EOnlineDataAdvertisementType::ViaOnlineService));

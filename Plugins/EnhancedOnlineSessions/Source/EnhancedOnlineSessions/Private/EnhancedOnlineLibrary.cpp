@@ -45,8 +45,9 @@ UEnhancedOnlineRequest_LoginUser* UEnhancedOnlineLibrary::ConstructOnlineLoginUs
 
 UEnhancedOnlineRequest_CreateSession* UEnhancedOnlineLibrary::ConstructOnlineCreateSessionRequest(
 	UObject* WorldContextObject, const EEnhancedSessionOnlineMode OnlineMode, int32 MaxPlayerCount,
-	FPrimaryAssetId MapId, bool bUseLobbiesIfAvailable, FString AdvertisementGameModeName, int32 LocalUserIndex,
-	bool bInvalidateAfterComplete, FBlueprintOnRequestFailedWithLogin OnFailed)
+	FPrimaryAssetId MapId, FString SessionFriendlyName, FString SearchKeyword, bool bUseLobbiesIfAvailable,
+	bool bUseVoiceChatIfAvailable, bool bUseServerTravelOnSuccess, FString AdvertisementGameModeName,
+	int32 LocalUserIndex, bool bInvalidateAfterComplete, FBlueprintOnRequestFailedWithLogin OnFailed)
 {
 	UEnhancedOnlineRequest_CreateSession* Request = NewObject<UEnhancedOnlineRequest_CreateSession>(WorldContextObject);
 	Request->bInvalidateAfterComplete = bInvalidateAfterComplete;
@@ -54,7 +55,11 @@ UEnhancedOnlineRequest_CreateSession* UEnhancedOnlineLibrary::ConstructOnlineCre
 	Request->OnlineMode = OnlineMode;
 	Request->MaxPlayerCount = MaxPlayerCount;
 	Request->MapId = MapId;
+	Request->SessionFriendlyName = SessionFriendlyName;
+	Request->SearchKeyword = SearchKeyword;
 	Request->bUseLobbiesIfAvailable = bUseLobbiesIfAvailable;
+	Request->bUseVoiceChatIfAvailable = bUseVoiceChatIfAvailable;
+	Request->bUseServerTravelOnSuccess = bUseServerTravelOnSuccess;
 	Request->AdvertisementGameModeName = AdvertisementGameModeName;
 
 	Request->ConstructRequest();

@@ -4,15 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "Interfaces/OnlineMessageInterface.h"
+#include "EnhancedOnlineTypes.h"
 #include "Interfaces/OnlineSessionInterface.h"
 #include "OnlineSubsystemUtils.h"
 #include "OnlineSubsystem.h"
 #include "Engine/AssetManager.h"
 #include "EnhancedOnlineRequests.generated.h"
 
-enum class EEnhancedSessionOnlineMode : uint8;
 class UEnhancedOnlineSubsystem;
-enum class EEnhancedAuthType : uint8;
 
 /**
  * A delegate that is called when a request fails.
@@ -156,14 +155,30 @@ public:
 	/** Indicates if the session is a full online session or a different type */
 	UPROPERTY(BlueprintReadWrite, Category = "Session")
 	EEnhancedSessionOnlineMode OnlineMode;
+	
+	/** The name of the matchmaking to specify what type of game mode this is */
+	UPROPERTY(BlueprintReadWrite, Category = "Session")
+	FString AdvertisementGameModeName;
 
+	/** The friendly name of the session, used to display in the UI */
+	UPROPERTY(BlueprintReadWrite, Category = "Session")
+	FString SessionFriendlyName;
+
+	/** The keyword that will be used to search for the session */
+	UPROPERTY(BlueprintReadWrite, Category = "Session")
+	FString SearchKeyword;
+	
 	/** Indicates if this request should create a player-hosted lobby if available */
 	UPROPERTY(BlueprintReadWrite, Category = "Session")
 	bool bUseLobbiesIfAvailable;
 
-	/** The name of the matchmaking to specify what type of game mode this is */
+	/** Indicates if this request should use voice chat if available */
 	UPROPERTY(BlueprintReadWrite, Category = "Session")
-	FString AdvertisementGameModeName;
+	bool bUseVoiceChatIfAvailable;
+
+	/** Indicates if the server should travel to the new session URL on success, or just open as normal level */
+	UPROPERTY(BlueprintReadWrite, Category = "Session")
+	bool bUseServerTravelOnSuccess;
 
 	/** The map that will be loaded when the session is created, this needs to be a valid Primary Asset top-level map */
 	UPROPERTY(BlueprintReadWrite, Category = "Session", meta = (AllowedTypes = "World"))
@@ -179,8 +194,6 @@ public:
 
 		Sessions = OnlineSub->GetSessionInterface();
 		check(Sessions);
-
-		//TODO:
 	}
 
 public:
@@ -199,7 +212,7 @@ public:
 	}
 
 	/** Constructs the full travel URL that will be used to join the session */
-	virtual FString ConstructTravelURL() const
+	virtual FString ConstructTravelURL(bool bWithServerTravel = true) const
 	{
 		FString CombinedExtraArgs;
 
@@ -208,7 +221,7 @@ public:
 			CombinedExtraArgs += TEXT("?bIsLanMatch");
 		}
 
-		if (OnlineMode != EEnhancedSessionOnlineMode::Offline)
+		if (OnlineMode != EEnhancedSessionOnlineMode::Offline && bWithServerTravel)
 		{
 			CombinedExtraArgs += TEXT("?listen");
 		}
