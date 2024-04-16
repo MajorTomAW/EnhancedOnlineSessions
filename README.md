@@ -18,28 +18,26 @@ The entire online service logic is stored into a custom GameInstanceSubsystem.
 ## Supported actions:
 <details>
   <summary>
-    Login Common User
+    Login / Logout User
   </summary>
   <br>
-    - Login to the online service with the given credentials. <br>
+    - Login/Logout to the online service with the given credentials. <br>
     - Required by EOS. <br>
     - Supports "Account Portal", "Developer", "External Auth", "Persistant Auth", and more.
 </details>
 <details>
   <summary>
-    Find Online/Offline Sessions
+    Finding and Creating Online/Offline Sessions
   </summary>
   <br>
-    - Find sessions hosted in your online service. <br>
+    - Find sessions hosted in your online service. Or create a new one<br>
     - Supports LAN, Offline and Online sessions. <br>
     - Expanded Functionality for EOS (SEARCH_KEYWORDS, etc). <br>
 </details>
 <details>
   <summary>
-    Create Online/Offline Sessions
+    Friends
   </summary>
   <br>
-    - Host sessions in your online service. <br>
-    - Supports LAN, Offline and Online sessions. <br>
-    - Expanded Functionality for EOS (SEARCH_KEYWORDS, etc). <br>
+    - Read the players friends list
 </details>
