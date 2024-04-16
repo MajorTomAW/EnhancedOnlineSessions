@@ -3,8 +3,8 @@ Unreal Engine Plugin used to manage an online subsystem <br>
 Developed with Unreal Engine 5.3
 
 EnhancedOnlineSessions Subsystem that helps communication with the online subsystem. <br>
-Supports STEAM and EOS
-Specific settings for EOS are included.
+Supports STEAM and EOS. <br>
+Specific settings for EOS are also included.
 
 Tired of the Advanced Sessions Plugin? <br>
 This is the new one! <br>
