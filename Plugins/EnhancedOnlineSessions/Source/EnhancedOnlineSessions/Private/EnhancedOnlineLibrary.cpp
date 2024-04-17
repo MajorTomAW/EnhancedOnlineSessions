@@ -4,6 +4,8 @@
 #include "EnhancedOnlineLibrary.h"
 
 #include "EnhancedOnlineRequests.h"
+#include "EnhancedOnlineSessions.h"
+#include "Kismet/GameplayStatics.h"
 
 void UEnhancedOnlineLibrary::SetupFailureDelegate(
 	UEnhancedOnlineRequest* Request,
@@ -18,6 +20,37 @@ void UEnhancedOnlineLibrary::SetupFailureDelegate(
 			}
 			Request->InvalidateRequest();
 		});
+}
+
+void UEnhancedOnlineLibrary::SwitchOnLoginStatus(EEnhancedLoginStatus& LoginStatus, UObject* WorldContextObject,int32 LocalUserIndex)
+{
+	IOnlineSubsystem* OnlineSub = Online::GetSubsystem(WorldContextObject->GetWorld());
+	check(OnlineSub);
+
+	IOnlineIdentityPtr Identity = OnlineSub->GetIdentityInterface();
+	check(Identity.IsValid());
+
+	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(WorldContextObject, LocalUserIndex);
+	if (PlayerController == nullptr)
+	{
+		UE_LOG(LogEnhancedSubsystem, Error, TEXT("SwitchOnLoginStatus was called with a bad local player index."));
+		LoginStatus = EEnhancedLoginStatus::NotLoggedIn;
+		return;
+	}
+
+	ELoginStatus::Type PlayerLoginStatus = Identity->GetLoginStatus(0);
+	LoginStatus = static_cast<EEnhancedLoginStatus>(static_cast<int32>(PlayerLoginStatus));
+}
+
+bool UEnhancedOnlineLibrary::IsPlayerLoggedIn(UObject* WorldContextObject, int32 LocalUserIndex)
+{
+	IOnlineSubsystem* OnlineSub = Online::GetSubsystem(WorldContextObject->GetWorld());
+	check(OnlineSub);
+
+	IOnlineIdentityPtr Identity = OnlineSub->GetIdentityInterface();
+	check(Identity.IsValid());
+
+	return Identity->GetLoginStatus(LocalUserIndex) == ELoginStatus::LoggedIn;
 }
 
 UEnhancedOnlineRequest_LoginUser* UEnhancedOnlineLibrary::ConstructOnlineLoginUserRequest(
@@ -46,7 +79,7 @@ UEnhancedOnlineRequest_LoginUser* UEnhancedOnlineLibrary::ConstructOnlineLoginUs
 UEnhancedOnlineRequest_CreateSession* UEnhancedOnlineLibrary::ConstructOnlineCreateSessionRequest(
 	UObject* WorldContextObject, const EEnhancedSessionOnlineMode OnlineMode, int32 MaxPlayerCount,
 	FPrimaryAssetId MapId, FString SessionFriendlyName, FString SearchKeyword, bool bUseLobbiesIfAvailable,
-	bool bUseVoiceChatIfAvailable, bool bUseServerTravelOnSuccess, FString AdvertisementGameModeName,
+	bool bUseVoiceChatIfAvailable, bool bUseServerTravelOnSuccess, FString AdvertisementGameModeName, const TArray<FEnhancedStoredExtraSessionSettings>& StoredSettings,
 	int32 LocalUserIndex, bool bInvalidateAfterComplete, FBlueprintOnRequestFailedWithLogin OnFailed)
 {
 	UEnhancedOnlineRequest_CreateSession* Request = NewObject<UEnhancedOnlineRequest_CreateSession>(WorldContextObject);
@@ -57,6 +90,7 @@ UEnhancedOnlineRequest_CreateSession* UEnhancedOnlineLibrary::ConstructOnlineCre
 	Request->MapId = MapId;
 	Request->SessionFriendlyName = SessionFriendlyName;
 	Request->SearchKeyword = SearchKeyword;
+	Request->StoredSettings = StoredSettings;
 	Request->bUseLobbiesIfAvailable = bUseLobbiesIfAvailable;
 	Request->bUseVoiceChatIfAvailable = bUseVoiceChatIfAvailable;
 	Request->bUseServerTravelOnSuccess = bUseServerTravelOnSuccess;
@@ -66,4 +100,39 @@ UEnhancedOnlineRequest_CreateSession* UEnhancedOnlineLibrary::ConstructOnlineCre
 	SetupFailureDelegate(Request, OnFailed);
 
 	return Request;
+}
+
+UEnhancedOnlineRequest_JoinSession* UEnhancedOnlineLibrary::ConstructOnlineJoinSessionRequest(
+	UObject* WorldContextObject, UEnhancedSessionSearchResult* SessionToJoin, int32 LocalUserIndex,
+	bool bInvalidateAfterComplete, FBlueprintOnRequestFailedWithLogin OnFailed)
+{
+	UEnhancedOnlineRequest_JoinSession* Request = NewObject<UEnhancedOnlineRequest_JoinSession>(WorldContextObject);
+	Request->bInvalidateAfterComplete = bInvalidateAfterComplete;
+	Request->LocalUserIndex = LocalUserIndex;
+	Request->SessionToJoin = SessionToJoin;
+
+	Request->ConstructRequest();
+	SetupFailureDelegate(Request, OnFailed);
+
+	return Request;
+}
+
+FEnhancedStoredExtraSessionSettings UEnhancedOnlineLibrary::MakeSettingByInt(const FName Key, const int32 Value)
+{
+	return MakeSetting<int32>(Key, Value);
+}
+
+FEnhancedStoredExtraSessionSettings UEnhancedOnlineLibrary::MakeSettingByString(const FName Key, const FString Value)
+{
+	return MakeSetting<FString>(Key, Value);
+}
+
+FEnhancedStoredExtraSessionSettings UEnhancedOnlineLibrary::MakeSettingByFloat(const FName Key, const float Value)
+{
+	return MakeSetting<float>(Key, Value);
+}
+
+FEnhancedStoredExtraSessionSettings UEnhancedOnlineLibrary::MakeSettingByBool(const FName Key, const bool Value)
+{
+	return MakeSetting<bool>(Key, Value);
 }

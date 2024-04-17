@@ -13,6 +13,7 @@ void UEnhancedOnlineSubsystem::BindSessionDelegates(IOnlineSessionPtr Sessions)
 
 	Sessions->AddOnCreateSessionCompleteDelegate_Handle(FOnCreateSessionCompleteDelegate::CreateUObject(this, &ThisClass::OnCreateSessionComplete));
 	Sessions->AddOnStartSessionCompleteDelegate_Handle(FOnStartSessionCompleteDelegate::CreateUObject(this, &ThisClass::OnStartSessionComplete));
+	Sessions->AddOnJoinSessionCompleteDelegate_Handle(FOnJoinSessionCompleteDelegate::CreateUObject(this, &ThisClass::OnJoinSessionComplete));
 }
 
 
@@ -87,6 +88,15 @@ void UEnhancedOnlineSubsystem::CreateOnlineSessionInternal(ULocalPlayer* LocalPl
 		FSessionSettings& UserSettings = SessionSettings->MemberSettings.Add(UserId.ToSharedRef(), FSessionSettings());
 		UserSettings.Add(SETTING_GAMEMODE, FOnlineSessionSetting(FString("GameSession"), EOnlineDataAdvertisementType::ViaOnlineService));
 
+		TArray<FEnhancedStoredExtraSessionSettings> StoredSettings = Request->StoredSettings;
+		StoredSettings.Add(FEnhancedStoredExtraSessionSettings("FRIENDLYNAME", Request->SessionFriendlyName));
+		
+		for (const FEnhancedStoredExtraSessionSettings& Setting : StoredSettings)
+		{
+			FOnlineSessionSetting NewSetting(Setting.Data, EOnlineDataAdvertisementType::ViaOnlineService);
+			SessionSettings->Settings.Add(Setting.Key, NewSetting);
+		}
+
 		Request->Sessions->CreateSession(*UserId, SessionName, *SessionSettings);
 	}
 	else
@@ -126,4 +136,105 @@ void UEnhancedOnlineSubsystem::OnStartSessionComplete(FName SessionName, bool bW
 	{
 		UE_LOG(LogEnhancedSubsystem, Error, TEXT("Failed to start session: %s"), *SessionName.ToString());
 	}
+}
+
+
+void UEnhancedOnlineSubsystem::JoinOnlineSession(UEnhancedOnlineRequest_JoinSession* Request)
+{
+	if (Request == nullptr)
+	{
+		UE_LOG(LogEnhancedSubsystem, Error, TEXT("Join Online Session was called with a bad request."));
+		return;
+	}
+
+	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(Request->GetWorld(), Request->LocalUserIndex);
+	if (PlayerController == nullptr)
+	{
+		UE_LOG(LogEnhancedSubsystem, Error, TEXT("Join Online Session was called with a bad local player index."));
+		Request->OnRequestFailed.Broadcast(TEXT("Join Online Session was called with a bad local player index."));
+		return;
+	}
+
+	ULocalPlayer* LocalPlayer = PlayerController->GetLocalPlayer();
+	if (LocalPlayer == nullptr)
+	{
+		UE_LOG(LogEnhancedSubsystem, Error, TEXT("Join Online Session is unable to get the local player of the local user index: %d"), Request->LocalUserIndex);
+		Request->OnRequestFailed.Broadcast(TEXT("Join Online Session is unable to get the local player of the local user index."));
+		return;
+	}
+
+	JoinOnlineSessionInternal(LocalPlayer, Request);
+}
+
+void UEnhancedOnlineSubsystem::JoinOnlineSessionInternal(ULocalPlayer* LocalPlayer, UEnhancedOnlineRequest_JoinSession* Request)
+{
+	check(Request->OnlineSub);
+	check(Request->Sessions);
+
+	PendingJoinRequest = Request;
+
+	Request->Sessions->JoinSession(*LocalPlayer->GetPreferredUniqueNetId().GetUniqueNetId(), NAME_GameSession, Request->SessionToJoin->SearchResult);
+}
+
+void UEnhancedOnlineSubsystem::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
+{
+	if (Result == EOnJoinSessionCompleteResult::Success)
+	{
+		APlayerController* PlayerController = GetGameInstance()->GetFirstLocalPlayerController();
+		if (PlayerController == nullptr)
+		{
+			UE_LOG(LogEnhancedSubsystem, Error, TEXT("Failed to get the first local player controller."));
+			return;
+		}
+		
+		TravelToSessionInternal(PlayerController, SessionName);
+	}
+	else
+	{
+		FText ReturnReason;
+		switch (Result)
+		{
+		case EOnJoinSessionCompleteResult::SessionIsFull:
+			ReturnReason = NSLOCTEXT("NetworkErrors", "SessionIsFull", "Game is full.");
+			break;
+		case EOnJoinSessionCompleteResult::SessionDoesNotExist:
+			ReturnReason = NSLOCTEXT("NetworkErrors", "SessionDoesNotExist", "Game no longer exists.");
+			break;
+		default:
+			ReturnReason = NSLOCTEXT("NetworkErrors", "JoinSessionFailed", "Join failed.");
+			break;
+		}
+
+		UE_LOG(LogEnhancedSubsystem, Error, TEXT("Failed to join session: %s"), *ReturnReason.ToString());
+
+		if (IsValid(PendingJoinRequest))
+		{
+			PendingJoinRequest->OnRequestFailed.Broadcast(ReturnReason.ToString());
+			PendingJoinRequest->MarkAsGarbage();
+			PendingJoinRequest = nullptr;
+		}
+	}
+}
+
+void UEnhancedOnlineSubsystem::TravelToSessionInternal(APlayerController* PlayerController, const FName SessionName)
+{
+	FString TravelURL;
+	IOnlineSubsystem* OnlineSub = Online::GetSubsystem(GetWorld());
+	check(OnlineSub);
+
+	IOnlineSessionPtr Sessions = OnlineSub->GetSessionInterface();
+	check(Sessions.IsValid());
+
+	if (!Sessions->GetResolvedConnectString(SessionName, TravelURL))
+	{
+		if (IsValid(PendingJoinRequest))
+		{
+			PendingJoinRequest->OnRequestFailed.Broadcast(TEXT("Failed to get the resolved connect string."));
+			PendingJoinRequest->MarkAsGarbage();
+			PendingJoinRequest = nullptr;
+		}
+		return;
+	}
+
+	PlayerController->ClientTravel(TravelURL, TRAVEL_Absolute);
 }

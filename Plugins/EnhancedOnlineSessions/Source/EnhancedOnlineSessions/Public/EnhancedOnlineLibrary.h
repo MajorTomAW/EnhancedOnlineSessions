@@ -7,6 +7,8 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "EnhancedOnlineLibrary.generated.h"
 
+class UEnhancedSessionSearchResult;
+class UEnhancedOnlineRequest_JoinSession;
 class UEnhancedOnlineRequest;
 class UEnhancedOnlineRequest_CreateSession;
 class UEnhancedOnlineRequest_LoginUser;
@@ -27,6 +29,26 @@ protected:
 	static void SetupFailureDelegate(UEnhancedOnlineRequest* Request, FBlueprintOnRequestFailedWithLogin OnFailed);
 
 public:
+	/**
+	 * Switches on the login status of the player and executes the appropriate delegate.
+	 * 
+	 * @param LoginStatus			The login status of the player
+	 * @param WorldContextObject	The world context object, IF YOU SEE THIS IN BLUEPRINTS, YOU ARE DOING SOMETHING WRONG >:(
+	 * @param LocalUserIndex		The index of the local user that is making the request
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Online|EnhancedSessions|Identity", meta = (WorldContext = "WorldContextObject", ExpandEnumAsExecs = "LoginStatus"))
+	static void SwitchOnLoginStatus(EEnhancedLoginStatus& LoginStatus, UObject* WorldContextObject, int32 LocalUserIndex = 0);
+
+	/**
+	 * Checks if the player is logged in to the online service.
+	 * 
+	 * @param WorldContextObject	The world context object, IF YOU SEE THIS IN BLUEPRINTS, YOU ARE DOING SOMETHING WRONG >:(
+	 * @param LocalUserIndex		The index of the local user that is making the request
+	 * @return True if the player is logged in, false otherwise
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Online|EnhancedSessions|Identity", meta = (WorldContext = "WorldContextObject"))
+	static bool IsPlayerLoggedIn(UObject* WorldContextObject, int32 LocalUserIndex = 0);
+	
 	/**
 	 * Creates a login user request object that can be used to log in to an online service.
 	 * 
@@ -65,6 +87,7 @@ public:
 	 * @param bUseVoiceChatIfAvailable		Should voice chat be used in the session if the online service supports it
 	 * @param bUseServerTravelOnSuccess		Should the server travel to the session map. default should be true
 	 * @param AdvertisementGameModeName		The name of the game mode that will be advertised, only for display purposes or matchmaking
+	 * @param StoredSettings				A list of extra settings that will be stored in the session on creation
 	 * @param LocalUserIndex				The index of the local user that is making the request
 	 * @param bInvalidateAfterComplete		Should the request be invalidated after it is completed, default to true to save memory
 	 * @param OnFailed						The delegate that will be called if the request fails
@@ -72,9 +95,9 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Online|EnhancedSessions|Sessions", meta =
 		(WorldContext = "WorldContextObject", Keywords = "Create, Make, New",
-			AdvancedDisplay = "bInvalidateAfterComplete",
+			AdvancedDisplay = "bInvalidateAfterComplete", AutoCreateRefTerm = "StoredSettings",
 			OnlineMode = "Online", MaxPlayerCount = "4", SearchKeyword = "default", AdvertisementGameModeName = "default", bUseLobbiesIfAvailable = "true",
-			bUseVoiceChatIfAvailable = "false", bUseServerTravelOnSuccess = "true", bInvalidatesAfterComplete = "true"))
+			bUseVoiceChatIfAvailable = "false", bUseServerTravelOnSuccess = "true", bInvalidatesAfterComplete = "true", StoredSettings = "None"))
 	static UPARAM(DisplayName = "Request") UEnhancedOnlineRequest_CreateSession* ConstructOnlineCreateSessionRequest(
 		UObject* WorldContextObject,
 		const EEnhancedSessionOnlineMode OnlineMode,
@@ -86,7 +109,84 @@ public:
 		bool bUseVoiceChatIfAvailable,
 		bool bUseServerTravelOnSuccess,
 		FString AdvertisementGameModeName,
+		const TArray<FEnhancedStoredExtraSessionSettings>& StoredSettings,
 		int32 LocalUserIndex,
 		bool bInvalidateAfterComplete,
 		FBlueprintOnRequestFailedWithLogin OnFailed);
+
+	/**
+	 * Creates a join session request object that can be used to join a session.
+	 * 
+	 * @param WorldContextObject			The world context object, IF YOU SEE THIS IN BLUEPRINTS, YOU ARE DOING SOMETHING WRONG >:(
+	 * @param SessionToJoin					The session that will be joined
+	 * @param LocalUserIndex				The index of the local user that is making the request
+	 * @param bInvalidateAfterComplete		Should the request be invalidated after it is completed, default to true to save memory
+	 * @param OnFailed						The delegate that will be called if the request fails
+	 * @return The join session request object
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Online|EnhancedSessions|Sessions", meta =
+		(WorldContext = "WorldContextObject", Keywords = "Create, Make, New", AdvancedDisplay = "bInvalidateAfterComplete",
+			bInvalidateAfterComplete = "true", LocalUserIndex = "0"))
+	static UPARAM(DisplayName = "Request") UEnhancedOnlineRequest_JoinSession* ConstructOnlineJoinSessionRequest(
+		UObject* WorldContextObject,
+		UEnhancedSessionSearchResult* SessionToJoin,
+		int32 LocalUserIndex,
+		bool bInvalidateAfterComplete,
+		FBlueprintOnRequestFailedWithLogin OnFailed);
+
+public:
+	/**
+	 * Constructs a new extra session setting with the given key and value as an integer.
+	 * @param Key		The key of the setting which will be used to find the value
+	 * @param Value		The value of the setting which will be stored in the session
+	 * @return The extra session setting object
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Online|EnhancedSessions|Sessions", meta = (Keywords = "Make, New, Setting, Int"))
+	static FEnhancedStoredExtraSessionSettings MakeSettingByInt(const FName Key, const int32 Value);
+
+	/**
+	 * Constructs a new extra session setting with the given key and value as a string.
+	 * @param Key		The key of the setting which will be used to find the value
+	 * @param Value		The value of the setting which will be stored in the session
+	 * @return The extra session setting object
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Online|EnhancedSessions|Sessions", meta = (Keywords = "Make, New, Setting, String"))
+	static FEnhancedStoredExtraSessionSettings MakeSettingByString(const FName Key, const FString Value);
+
+	/**
+	 * Constructs a new extra session setting with the given key and value as a float.
+	 * @param Key		The key of the setting which will be used to find the value
+	 * @param Value		The value of the setting which will be stored in the session
+	 * @return The extra session setting object
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Online|EnhancedSessions|Sessions", meta = (Keywords = "Make, New, Setting, Float"))
+	static FEnhancedStoredExtraSessionSettings MakeSettingByFloat(const FName Key, const float Value);
+
+	/**
+	 * Constructs a new extra session setting with the given key and value as a boolean.
+	 * @param Key		The key of the setting which will be used to find the value
+	 * @param Value		The value of the setting which will be stored in the session
+	 * @return The extra session setting object
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Online|EnhancedSessions|Sessions", meta = (Keywords = "Make, New, Setting, Bool"))
+	static FEnhancedStoredExtraSessionSettings MakeSettingByBool(const FName Key, const bool Value);
+
+private:
+	/**
+	 * Constructs a new extra session setting with the given key and value.
+	 * @param Key		The key of the setting which will be used to find the value
+	 * @param Value		The value of the setting which will be stored in the session
+	 * @return The extra session setting object
+	 */
+	template<typename T>
+	static FEnhancedStoredExtraSessionSettings MakeSetting(const FName& Key, const T& Value);
 };
+
+template<typename T>
+FEnhancedStoredExtraSessionSettings UEnhancedOnlineLibrary::MakeSetting(const FName& Key, const T& Value)
+{
+	FEnhancedStoredExtraSessionSettings Setting;
+	Setting.Key = Key;
+	Setting.Data.SetValue(Value);
+	return Setting;
+}

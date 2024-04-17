@@ -69,6 +69,10 @@ public:
 	/** Creates a new session with the given settings */
 	UFUNCTION(BlueprintCallable, Category = "Online|EnhancedSessions|Sessions")
 	virtual void CreateOnlineSession(UEnhancedOnlineRequest_CreateSession* Request);
+
+	/** Joins a session with the given search result */
+	UFUNCTION(BlueprintCallable, Category = "Online|EnhancedSessions|Sessions")
+	virtual void JoinOnlineSession(UEnhancedOnlineRequest_JoinSession* Request);
 #pragma endregion
 
 protected:
@@ -77,14 +81,21 @@ protected:
 
 	/** Online Sessions */
 	virtual void CreateOnlineSessionInternal(ULocalPlayer* LocalPlayer, UEnhancedOnlineRequest_CreateSession* Request);
+	virtual void JoinOnlineSessionInternal(ULocalPlayer* LocalPlayer, UEnhancedOnlineRequest_JoinSession* Request);
+	virtual void TravelToSessionInternal(APlayerController* PlayerController, const FName SessionName);
 
 
 	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
 	void OnStartSessionComplete(FName SessionName, bool bWasSuccessful);
+	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 
 protected:
 	/** The travel URL that will be used after session operations are complete */
 	FString PendingTravelURL;
+
+	/** The pending join request that will be used after session operations are complete */
+	UPROPERTY()
+	TObjectPtr<UEnhancedOnlineRequest_JoinSession> PendingJoinRequest;
 
 	/** Settings for the current host request */
 	TSharedPtr<FEnhancedOnlineSessionSettings> SessionSettings;

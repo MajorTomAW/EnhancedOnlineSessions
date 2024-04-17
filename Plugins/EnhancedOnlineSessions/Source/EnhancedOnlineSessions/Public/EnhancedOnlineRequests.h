@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Interfaces/OnlineMessageInterface.h"
 #include "EnhancedOnlineTypes.h"
+#include "OnlineSessionSettings.h"
 #include "Interfaces/OnlineSessionInterface.h"
 #include "OnlineSubsystemUtils.h"
 #include "OnlineSubsystem.h"
@@ -12,6 +13,64 @@
 #include "EnhancedOnlineRequests.generated.h"
 
 class UEnhancedOnlineSubsystem;
+
+/**
+ * A session result object from the online subsystem that represents a joinable game session
+ */
+UCLASS(BlueprintType)
+class UEnhancedSessionSearchResult : public UObject
+{
+	GENERATED_BODY()
+
+public:
+	/** Pings the session to get the current ping in milliseconds */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Online|EnhancedSessions|Session")
+	int32 GetPingInMs() const
+	{
+		return SearchResult.PingInMs;
+	}
+
+	/** Returns the maximum number of players that can join the session */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Online|EnhancedSessions|Session")
+	int32 GetMaxPlayers() const
+	{
+		return SearchResult.Session.SessionSettings.NumPublicConnections;
+	}
+
+	/** Returns the number of players currently in the session */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Online|EnhancedSessions|Session")
+	int32 GetCurrentPlayers() const
+	{
+		return SearchResult.Session.SessionSettings.NumPublicConnections - SearchResult.Session.NumOpenPublicConnections;
+	}
+
+	/** Returns the friendly name of the session */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Online|EnhancedSessions|Session")
+	FString GetServerFriendlyName() const
+	{
+		if (SearchResult.Session.SessionSettings.Settings.Array().Num() > 0)
+		{
+			for (auto& Setting : SearchResult.Session.SessionSettings.Settings)
+			{
+				if (Setting.Key == TEXT("FRIENDLYNAME"))
+				{
+					return Setting.Value.Data.ToString();
+				}
+			}
+		}
+
+		if (SearchResult.Session.OwningUserId.IsValid())
+		{
+			return SearchResult.Session.OwningUserId->ToString();
+		}
+
+		return TEXT("Unknown");
+	}
+
+public:
+	/** The session id that uniquely identifies the session */
+	FOnlineSessionSearchResult SearchResult;
+};
 
 /**
  * A delegate that is called when a request fails.
@@ -38,7 +97,7 @@ public:
 	bool bInvalidateAfterComplete = false;
 	
 	/** Invalidates the request to save memory */
-	FORCEINLINE void InvalidateRequest()
+	void InvalidateRequest()
 	{
 		OnlineSub = nullptr;
 		UnbindDelegates();
@@ -46,20 +105,20 @@ public:
 	}
 
 	/** Unbinds all delegates to this request */
-	FORCEINLINE virtual void UnbindDelegates()
+	virtual void UnbindDelegates()
 	{
 		OnRequestFailed.RemoveAll(this);
 		OnRequestFailed.Clear();
 	}
 
 	/** Constructs the request and sets up important data */
-	FORCEINLINE virtual void ConstructRequest()
+	virtual void ConstructRequest()
 	{
 		OnlineSub = Online::GetSubsystem(GetWorld());
 		check(OnlineSub);
 	}
 
-	FORCEINLINE virtual void CompleteRequest()
+	virtual void CompleteRequest()
 	{
 		if (bInvalidateAfterComplete)
 		{
@@ -107,7 +166,7 @@ public:
 	/** Native delegate which is called when the login request is successful */
 	FOnLoginUserSuccess OnLoginSuccess;
 
-	FORCEINLINE virtual void ConstructRequest() override
+	virtual void ConstructRequest() override
 	{
 		Super::ConstructRequest();
 
@@ -130,7 +189,7 @@ public:
 			}));
 	}
 
-	FORCEINLINE virtual void UnbindDelegates() override
+	virtual void UnbindDelegates() override
 	{
 		Super::UnbindDelegates();
 
@@ -176,6 +235,10 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Session")
 	bool bUseVoiceChatIfAvailable;
 
+	/** A list of extra settings that will be stored in the session on creation */
+	UPROPERTY(BlueprintReadWrite, Category = "Session")
+	TArray<FEnhancedStoredExtraSessionSettings> StoredSettings;
+
 	/** Indicates if the server should travel to the new session URL on success, or just open as normal level */
 	UPROPERTY(BlueprintReadWrite, Category = "Session")
 	bool bUseServerTravelOnSuccess;
@@ -188,7 +251,7 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Session")
 	int32 MaxPlayerCount;
 
-	FORCEINLINE virtual void ConstructRequest() override
+	virtual void ConstructRequest() override
 	{
 		Super::ConstructRequest();
 
@@ -244,6 +307,33 @@ public:
 #else
 		return false;
 #endif
+	}
+
+protected:
+	friend UEnhancedOnlineSubsystem;
+	IOnlineSessionPtr Sessions;
+};
+
+/**
+ * A request that is used to join an existing session.
+ */
+UCLASS()
+class UEnhancedOnlineRequest_JoinSession : public UEnhancedOnlineRequest
+{
+	GENERATED_BODY()
+
+public:
+	/** The session that will be joined */
+	UPROPERTY(BlueprintReadWrite, Category = "Session")
+	UEnhancedSessionSearchResult* SessionToJoin;
+
+public:
+	virtual void ConstructRequest() override
+	{
+		Super::ConstructRequest();
+
+		Sessions = OnlineSub->GetSessionInterface();
+		check(Sessions);
 	}
 
 protected:
