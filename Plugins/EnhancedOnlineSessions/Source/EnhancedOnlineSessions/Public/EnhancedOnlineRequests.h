@@ -10,6 +10,7 @@
 #include "OnlineSubsystemUtils.h"
 #include "OnlineSubsystem.h"
 #include "Engine/AssetManager.h"
+#include "Online/OnlineSessionNames.h"
 #include "EnhancedOnlineRequests.generated.h"
 
 class UEnhancedOnlineSubsystem;
@@ -339,4 +340,115 @@ public:
 protected:
 	friend UEnhancedOnlineSubsystem;
 	IOnlineSessionPtr Sessions;
+};
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnFindSessionsSuccess, const TArray<UEnhancedSessionSearchResult*>&);
+/**
+ * A request that is used to search for sessions.
+ */
+UCLASS()
+class UEnhancedOnlineRequest_SearchSessions : public UEnhancedOnlineRequest
+{
+	GENERATED_BODY()
+
+public:
+	/** Indicates for what type of session the search should be performed */
+	UPROPERTY(BlueprintReadWrite, Category = "Session")
+	EEnhancedSessionOnlineMode OnlineMode;
+
+	/** Whether to search for player-hosted lobbies if the online subsystem does support that */
+	UPROPERTY(BlueprintReadWrite, Category = "Session")
+	bool bUseLobbiesIfAvailable;
+
+	/** Maximum number of search results that will be returned */
+	UPROPERTY(BlueprintReadWrite, Category = "Session")
+	int32 MaxSearchResults;
+
+	/** The keyword that will be used to search and filter for the session */
+	UPROPERTY(BlueprintReadWrite, Category = "Session")
+	FString SearchKeyword;
+
+	/** List of all found sessions, this will be populated after the search is complete */
+	UPROPERTY(BlueprintReadOnly, Category = "Session")
+	TArray<TObjectPtr<UEnhancedSessionSearchResult>> SearchResults;
+
+	/** Native delegate which is called when the search request is successful */
+	FOnFindSessionsSuccess OnFindSessionsSuccess;
+
+public:
+	virtual void ConstructRequest() override
+	{
+		Super::ConstructRequest();
+
+		Sessions = OnlineSub->GetSessionInterface();
+		check(Sessions);
+	}
+
+	virtual void UnbindDelegates() override
+	{
+		Super::UnbindDelegates();
+		
+		OnFindSessionsSuccess.RemoveAll(this);
+		OnFindSessionsSuccess.Clear();
+	}
+
+private:
+	friend UEnhancedOnlineSubsystem;
+	IOnlineSessionPtr Sessions;
+};
+
+/**
+ * Helper class for garbage collection to ensure that the search request is properly referenced
+ */
+class FEnhancedOnlineSearchSettingBase : public FGCObject
+{
+public:
+	FEnhancedOnlineSearchSettingBase(UEnhancedOnlineRequest_SearchSessions* InSearchRequest)
+	{
+		SearchRequest = InSearchRequest;
+	}
+
+	virtual ~FEnhancedOnlineSearchSettingBase() {}
+
+	virtual void AddReferencedObjects(FReferenceCollector& Collector) override
+	{
+		Collector.AddReferencedObject(SearchRequest);
+	}
+
+	virtual FString GetReferencerName() const override
+	{
+		static const FString NameString = TEXT("FEnhancedOnlineSearchSettingBase");
+		return NameString;
+	}
+
+public:
+	TObjectPtr<UEnhancedOnlineRequest_SearchSessions> SearchRequest = nullptr;
+};
+
+/**
+ * Helper class for search settings to be used with the online subsystem
+ */
+class FEnhancedOnlineSearchSettings : public FOnlineSessionSearch, public FEnhancedOnlineSearchSettingBase
+{
+public:
+	FEnhancedOnlineSearchSettings(UEnhancedOnlineRequest_SearchSessions* InSearchRequest)
+		: FEnhancedOnlineSearchSettingBase(InSearchRequest)
+	{
+		bIsLanQuery = (InSearchRequest->OnlineMode == EEnhancedSessionOnlineMode::LAN);
+		MaxSearchResults = InSearchRequest->MaxSearchResults <= 0 ? INT_MAX : InSearchRequest->MaxSearchResults;
+		PingBucketSize = 50;
+
+		if (InSearchRequest->bUseLobbiesIfAvailable)
+		{
+			QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
+			QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
+		}
+
+		if (!InSearchRequest->SearchKeyword.IsEmpty())
+		{
+			QuerySettings.Set(SEARCH_KEYWORDS, InSearchRequest->SearchKeyword, EOnlineComparisonOp::Equals);
+		}
+	}
+
+	virtual ~FEnhancedOnlineSearchSettings() {}
 };

@@ -14,6 +14,7 @@ void UEnhancedOnlineSubsystem::BindSessionDelegates(IOnlineSessionPtr Sessions)
 	Sessions->AddOnCreateSessionCompleteDelegate_Handle(FOnCreateSessionCompleteDelegate::CreateUObject(this, &ThisClass::OnCreateSessionComplete));
 	Sessions->AddOnStartSessionCompleteDelegate_Handle(FOnStartSessionCompleteDelegate::CreateUObject(this, &ThisClass::OnStartSessionComplete));
 	Sessions->AddOnJoinSessionCompleteDelegate_Handle(FOnJoinSessionCompleteDelegate::CreateUObject(this, &ThisClass::OnJoinSessionComplete));
+	Sessions->AddOnFindSessionsCompleteDelegate_Handle(FOnFindSessionsCompleteDelegate::CreateUObject(this, &ThisClass::OnFindSessionsComplete));
 }
 
 
@@ -238,3 +239,121 @@ void UEnhancedOnlineSubsystem::TravelToSessionInternal(APlayerController* Player
 
 	PlayerController->ClientTravel(TravelURL, TRAVEL_Absolute);
 }
+
+
+void UEnhancedOnlineSubsystem::FindOnlineSessions(UEnhancedOnlineRequest_SearchSessions* Request)
+{
+	if (Request == nullptr)
+	{
+		UE_LOG(LogEnhancedSubsystem, Error, TEXT("Find Online Sessions was called with a bad request."));
+		return;
+	}
+
+	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(Request->GetWorld(), Request->LocalUserIndex);
+	if (PlayerController == nullptr)
+	{
+		UE_LOG(LogEnhancedSubsystem, Error, TEXT("Find Online Sessions was called with a bad local player index."));
+		Request->OnRequestFailed.Broadcast(TEXT("Find Online Sessions was called with a bad local player index."));
+		return;
+	}
+
+	ULocalPlayer* LocalPlayer = PlayerController->GetLocalPlayer();
+	if (LocalPlayer == nullptr)
+	{
+		UE_LOG(LogEnhancedSubsystem, Error, TEXT("Find Online Sessions is unable to get the local player of the local user index: %d"), Request->LocalUserIndex);
+		Request->OnRequestFailed.Broadcast(TEXT("Find Online Sessions is unable to get the local player of the local user index."));
+		return;
+	}
+
+	FindOnlineSessionsInternal(LocalPlayer, MakeShared<FEnhancedOnlineSearchSettings>(Request));
+}
+
+void UEnhancedOnlineSubsystem::FindOnlineSessionsInternal(ULocalPlayer* LocalPlayer, const TSharedRef<FEnhancedOnlineSearchSettings>& InSearchSettings)
+{
+	if (SearchSettings.IsValid())
+	{
+		UE_LOG(LogEnhancedSubsystem, Warning, TEXT("Find Online Sessions was called while another search is still in progress."));
+		InSearchSettings->SearchRequest->OnRequestFailed.Broadcast(TEXT("Another search is still in progress."));
+		return;
+	}
+
+	SearchSettings = InSearchSettings;
+
+	if (!SearchSettings->SearchRequest->Sessions->FindSessions(*LocalPlayer->GetPreferredUniqueNetId().GetUniqueNetId(), StaticCastSharedRef<FEnhancedOnlineSearchSettings>(SearchSettings.ToSharedRef())))
+	{
+		SearchSettings->SearchRequest->OnRequestFailed.Broadcast(TEXT("Failed to start the search."));
+	}
+}
+
+void UEnhancedOnlineSubsystem::OnFindSessionsComplete(bool bWasSuccessful)
+{
+	UE_LOG(LogEnhancedSubsystem, Log, TEXT("OnFindSessionsComplete(bWasSuccessful: %s)"), bWasSuccessful ? TEXT("true") : TEXT("false"));
+
+	if (!SearchSettings.IsValid())
+	{
+		UE_LOG(LogEnhancedSubsystem, Error, TEXT("Find sessions was called with a bad search settings. Maybe we lost the reference?"));
+		return;
+	}
+
+	FEnhancedOnlineSearchSettings& LocalSearchSettings = *StaticCastSharedPtr<FEnhancedOnlineSearchSettings>(SearchSettings);
+	if (!ensure(LocalSearchSettings.SearchRequest))
+	{
+		UE_LOG(LogEnhancedSubsystem, Error, TEXT("Find sessions was called with a bad search request. Maybe we lost the reference?"));
+		return;	
+	}
+	
+	if (LocalSearchSettings.SearchState == EOnlineAsyncTaskState::InProgress)
+	{
+		UE_LOG(LogEnhancedSubsystem, Error, TEXT("Find sessions was called while another search is still in progress."));
+		LocalSearchSettings.SearchRequest->OnRequestFailed.Broadcast(TEXT("Another search is still in progress."));
+		return;
+	}
+
+	if (bWasSuccessful)
+	{
+		TArray<UEnhancedSessionSearchResult*> Results;
+		Results.Reserve(LocalSearchSettings.SearchResults.Num());
+
+		for (const FOnlineSessionSearchResult& Result : LocalSearchSettings.SearchResults)
+		{
+			UEnhancedSessionSearchResult* NewResult = NewObject<UEnhancedSessionSearchResult>(LocalSearchSettings.SearchRequest);
+			NewResult->SearchResult = Result;
+			LocalSearchSettings.SearchRequest->SearchResults.Add(NewResult);
+			Results.Add(NewResult);
+
+			FString OwningUserId = TEXT("Unknown");
+			if (Result.Session.OwningUserId.IsValid())
+			{
+				OwningUserId = Result.Session.OwningUserId->ToString();
+			}
+
+			UE_LOG(LogEnhancedSubsystem, Log, TEXT("\tFound session (UserId: %s, UserName: %s, NumOpenPrivConns: %d, NumOpenPubConns: %d, Ping: %d ms"),
+				*OwningUserId,
+				*Result.Session.OwningUserName,
+				Result.Session.NumOpenPrivateConnections,
+				Result.Session.NumOpenPublicConnections,
+				Result.PingInMs);
+		}
+
+		SearchSettings->SearchRequest->OnFindSessionsSuccess.Broadcast(Results);
+	}
+	else
+	{
+		UE_LOG(LogEnhancedSubsystem, Error, TEXT("Failed to find sessions."));
+		
+		if (!SearchSettings.IsValid())
+		{
+			UE_LOG(LogEnhancedSubsystem, Error, TEXT("Find sessions was called with a bad search settings. Maybe we lost the reference?"));
+			return;
+		}
+
+		if (SearchSettings->SearchRequest)
+		{
+			SearchSettings->SearchRequest->OnRequestFailed.Broadcast(TEXT("Failed to find sessions."));
+			SearchSettings->SearchRequest->SearchResults.Empty();
+		}
+	}
+
+	SearchSettings.Reset();
+}
+

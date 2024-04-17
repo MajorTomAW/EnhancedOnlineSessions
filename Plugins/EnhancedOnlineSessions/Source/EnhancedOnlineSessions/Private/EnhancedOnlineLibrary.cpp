@@ -102,6 +102,31 @@ UEnhancedOnlineRequest_CreateSession* UEnhancedOnlineLibrary::ConstructOnlineCre
 	return Request;
 }
 
+UEnhancedOnlineRequest_SearchSessions* UEnhancedOnlineLibrary::ConstructOnlineSearchSessionsRequest(
+	UObject* WorldContextObject, const EEnhancedSessionOnlineMode OnlineMode, int32 MaxSearchResults,
+	bool bSearchLobbiesIfAvailable, FString SearchKeyword, int32 LocalUserIndex, bool bInvalidateAfterComplete,
+	FBlueprintOnFindSessionsSuccess OnSuccess, FBlueprintOnRequestFailedWithLogin OnFailed)
+{
+	UEnhancedOnlineRequest_SearchSessions* Request = NewObject<UEnhancedOnlineRequest_SearchSessions>(WorldContextObject);
+	Request->bInvalidateAfterComplete = bInvalidateAfterComplete;
+	Request->LocalUserIndex = LocalUserIndex;
+	Request->OnlineMode = OnlineMode;
+	Request->MaxSearchResults = MaxSearchResults;
+	Request->SearchKeyword = SearchKeyword;
+	Request->bUseLobbiesIfAvailable = bSearchLobbiesIfAvailable;
+
+	Request->ConstructRequest();
+	SetupFailureDelegate(Request, OnFailed);
+
+	Request->OnFindSessionsSuccess.AddLambda(
+		[OnSuccess](const TArray<UEnhancedSessionSearchResult*>& SearchResults)
+		{
+			OnSuccess.Execute(SearchResults);
+		});
+
+	return Request;
+}
+
 UEnhancedOnlineRequest_JoinSession* UEnhancedOnlineLibrary::ConstructOnlineJoinSessionRequest(
 	UObject* WorldContextObject, UEnhancedSessionSearchResult* SessionToJoin, int32 LocalUserIndex,
 	bool bInvalidateAfterComplete, FBlueprintOnRequestFailedWithLogin OnFailed)

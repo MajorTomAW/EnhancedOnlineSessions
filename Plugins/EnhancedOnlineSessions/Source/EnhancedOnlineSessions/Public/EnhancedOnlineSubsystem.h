@@ -73,6 +73,10 @@ public:
 	/** Joins a session with the given search result */
 	UFUNCTION(BlueprintCallable, Category = "Online|EnhancedSessions|Sessions")
 	virtual void JoinOnlineSession(UEnhancedOnlineRequest_JoinSession* Request);
+
+	/** Searches for sessions with the given search settings */
+	UFUNCTION(BlueprintCallable, Category = "Online|EnhancedSessions|Sessions")
+	virtual void FindOnlineSessions(UEnhancedOnlineRequest_SearchSessions* Request);
 #pragma endregion
 
 protected:
@@ -83,11 +87,13 @@ protected:
 	virtual void CreateOnlineSessionInternal(ULocalPlayer* LocalPlayer, UEnhancedOnlineRequest_CreateSession* Request);
 	virtual void JoinOnlineSessionInternal(ULocalPlayer* LocalPlayer, UEnhancedOnlineRequest_JoinSession* Request);
 	virtual void TravelToSessionInternal(APlayerController* PlayerController, const FName SessionName);
+	virtual void FindOnlineSessionsInternal(ULocalPlayer* LocalPlayer, const TSharedRef<FEnhancedOnlineSearchSettings>& InSearchSettings);
 
 
 	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
 	void OnStartSessionComplete(FName SessionName, bool bWasSuccessful);
 	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
+	void OnFindSessionsComplete(bool bWasSuccessful);
 
 protected:
 	/** The travel URL that will be used after session operations are complete */
@@ -99,6 +105,9 @@ protected:
 
 	/** Settings for the current host request */
 	TSharedPtr<FEnhancedOnlineSessionSettings> SessionSettings;
+
+	/** Settings for the current search */
+	TSharedPtr<FEnhancedOnlineSearchSettings> SearchSettings;
 
 	/** True if this is a dedicated server, which doesn't require a LocalPlayer to create a session */
 	bool bIsDedicatedServer = false;
