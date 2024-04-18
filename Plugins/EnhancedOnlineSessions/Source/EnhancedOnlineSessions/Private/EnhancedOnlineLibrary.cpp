@@ -5,6 +5,8 @@
 
 #include "EnhancedOnlineRequests.h"
 #include "EnhancedOnlineSessions.h"
+#include "OnlineSubsystemUtils.h"
+#include "GameFramework/PlayerState.h"
 #include "Kismet/GameplayStatics.h"
 
 void UEnhancedOnlineLibrary::SetupFailureDelegate(
@@ -161,3 +163,51 @@ FEnhancedStoredExtraSessionSettings UEnhancedOnlineLibrary::MakeSettingByBool(co
 {
 	return MakeSetting<bool>(Key, Value);
 }
+
+FUniqueNetIdRepl UEnhancedOnlineLibrary::GetUniqueNetIdFromPlayerController(APlayerController* PlayerController)
+{
+	APlayerState* PlayerState = PlayerController->PlayerState;
+	return GetUniqueNetIdFromPlayerState(PlayerState);
+}
+
+FUniqueNetIdRepl UEnhancedOnlineLibrary::GetUniqueNetIdFromPlayerState(APlayerState* PlayerState)
+{
+	if (PlayerState == nullptr)
+	{
+		return FUniqueNetIdRepl();
+	}
+
+	return PlayerState->GetUniqueId().GetUniqueNetId();
+}
+
+FUniqueNetIdRepl UEnhancedOnlineLibrary::GetUniqueNetIdEOS(UObject* WorldContextObject, const int32 LocalPlayerIndex)
+{
+	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GEngine->GetWorldFromContextObjectChecked(WorldContextObject), LocalPlayerIndex);
+	
+	IOnlineSubsystem* OnlineSub = Online::GetSubsystem(PlayerController->GetWorld());
+	check(OnlineSub);
+
+	IOnlineIdentityPtr Identity = OnlineSub->GetIdentityInterface();
+	check(Identity.IsValid());
+
+	return FUniqueNetIdRepl(Identity->GetUniquePlayerId(LocalPlayerIndex));
+}
+
+FString UEnhancedOnlineLibrary::GetPlayerNicknameEOS(UObject* WorldContextObject, const int32 LocalPlayerIndex)
+{
+	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GEngine->GetWorldFromContextObjectChecked(WorldContextObject), LocalPlayerIndex);
+	
+	IOnlineSubsystem* OnlineSub = Online::GetSubsystem(PlayerController->GetWorld());
+	check(OnlineSub);
+
+	IOnlineIdentityPtr Identity = OnlineSub->GetIdentityInterface();
+	check(Identity.IsValid());
+
+	return Identity->GetPlayerNickname(0);
+}
+
+FString UEnhancedOnlineLibrary::UniqueNetIdToString(const FUniqueNetIdRepl& UniqueNetId)
+{
+	return UniqueNetId.GetUniqueNetId()->ToString();
+}
+

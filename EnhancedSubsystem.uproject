@@ -27,6 +27,10 @@
 			"Enabled": true
 		},
 		{
+			"Name": "EOSVoiceChat",
+			"Enabled": true
+		},
+		{
 			"Name": "OnlineServicesEOSGS",
 			"Enabled": true
 		},
@@ -35,15 +39,11 @@
 			"Enabled": true
 		},
 		{
-			"Name": "EOSVoiceChat",
+			"Name": "OnlineSubsystemEOS",
 			"Enabled": true
 		},
 		{
 			"Name": "SocketSubsystemEOS",
-			"Enabled": true
-		},
-		{
-			"Name": "OnlineSubsystemEOS",
 			"Enabled": true
 		}
 	]

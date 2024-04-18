@@ -200,6 +200,48 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Online|EnhancedSessions|Sessions", meta = (Keywords = "Make, New, Setting, Bool"))
 	static FEnhancedStoredExtraSessionSettings MakeSettingByBool(const FName Key, const bool Value);
 
+	/**
+	 * Gets the unique net id from the player controller.
+	 * @param PlayerController	The player controller that will be used to get the unique net id
+	 * @return The unique net id of the player controller
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Online|EnhancedSessions|Identity")
+	static FUniqueNetIdRepl GetUniqueNetIdFromPlayerController(APlayerController* PlayerController);
+
+	/**
+	 * Gets the unique net id from the player state.
+	 * @param PlayerState	The player state that will be used to get the unique net id
+	 * @return The unique net id of the player state
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Online|EnhancedSessions|Identity")
+	static FUniqueNetIdRepl GetUniqueNetIdFromPlayerState(APlayerState* PlayerState);
+
+	/**
+	 * Gets the unique net id from the local player index, will work with EOS. NOTE: This does not mean that it wont work with other online services.
+	 * @param WorldContextObject	The world context object, IF YOU SEE THIS IN BLUEPRINTS, YOU ARE DOING SOMETHING WRONG >:(
+	 * @param LocalPlayerIndex		The index of the local player that will be used to get the unique net id
+	 * @return The unique net id of the local player index
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Online|EnhancedSessions|Identity|EOS", meta = (WorldContext = "WorldContextObject", DisplayName = "Get Unique Net Id (EOS)"))
+	static FUniqueNetIdRepl GetUniqueNetIdEOS(UObject* WorldContextObject, const int32 LocalPlayerIndex);
+
+	/**
+	 * Gets the player nickname from the local player index, will work with EOS. NOTE: This does not mean that it wont work with other online services.
+	 * @param WorldContextObject	The world context object, IF YOU SEE THIS IN BLUEPRINTS, YOU ARE DOING SOMETHING WRONG >:(
+	 * @param LocalPlayerIndex		The index of the local player that will be used to get the player nickname
+	 * @return The player nickname of the local player index
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Online|EnhancedSessions|Identity|EOS", meta = (WorldContext = "WorldContextObject", DisplayName = "Get Player Nickname (EOS)"))
+	static FString GetPlayerNicknameEOS(UObject* WorldContextObject, const int32 LocalPlayerIndex);
+
+	/**
+	 * Converts the unique net id to a string.
+	 * @param UniqueNetId	The unique net id that will be converted to a string
+	 * @return The string representation of the unique net id
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Online|EnhancedSessions|Identity")
+	static FString UniqueNetIdToString(const FUniqueNetIdRepl& UniqueNetId);
+
 private:
 	/**
 	 * Constructs a new extra session setting with the given key and value.
