@@ -1,4 +1,7 @@
 # Enhanced Online Sessions Plugin
+
+>### Coming Soon: Project Settings to customize the online subsystem used without having to change the DefaultEngine.ini
+
 Unreal Engine Plugin used to manage an online subsystem <br>
 Developed with Unreal Engine 5.3
 
