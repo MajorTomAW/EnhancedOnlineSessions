@@ -19,31 +19,11 @@
 			]
 		},
 		{
-			"Name": "EnhancedOnlineSessions",
-			"Enabled": true
-		},
-		{
-			"Name": "EOSShared",
-			"Enabled": true
-		},
-		{
-			"Name": "EOSVoiceChat",
-			"Enabled": true
-		},
-		{
-			"Name": "OnlineServicesEOSGS",
-			"Enabled": true
-		},
-		{
-			"Name": "OnlineServicesEOS",
+			"Name": "EnhancedOnlineSubsystem",
 			"Enabled": true
 		},
 		{
 			"Name": "OnlineSubsystemEOS",
-			"Enabled": true
-		},
-		{
-			"Name": "SocketSubsystemEOS",
 			"Enabled": true
 		}
 	]

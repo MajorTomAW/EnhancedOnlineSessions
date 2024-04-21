@@ -1,26 +1,30 @@
-{
+﻿{
 	"FileVersion": 3,
 	"Version": 1,
-	"VersionName": "0.1",
-	"FriendlyName": "Enhanced Online Sessions",
-	"Description": "Plugin that helps communication with the online service.",
+	"VersionName": "1.0",
+	"FriendlyName": "Enhanced Online Subsystem",
+	"Description": "",
 	"Category": "Online",
 	"CreatedBy": "MajorT",
-	"CreatedByURL": "https://discord.com/users/majort",
+	"CreatedByURL": "",
 	"DocsURL": "",
 	"MarketplaceURL": "",
-	"CanContainContent": true,
-	"IsBetaVersion": true,
+	"CanContainContent": false,
+	"IsBetaVersion": false,
 	"IsExperimentalVersion": false,
 	"Installed": false,
 	"Modules": [
 		{
-			"Name": "EnhancedOnlineSessions",
+			"Name": "EnhancedOnlineSubsystem",
 			"Type": "Runtime",
 			"LoadingPhase": "PreLoadingScreen"
+		},
+		{
+			"Name": "EnhancedOnlineSubsystemEditor",
+			"Type": "Editor",
+			"LoadingPhase": "PostEngineInit"
 		}
 	],
-	"SupportURL": "https://discord.com/users/majort",
 	"Plugins": [
 		{
 			"Name": "OnlineSubsystem",
@@ -28,6 +32,10 @@
 		},
 		{
 			"Name": "OnlineSubsystemUtils",
+			"Enabled": true
+		},
+		{
+			"Name": "OnlineSubsystemEOS",
 			"Enabled": true
 		}
 	]

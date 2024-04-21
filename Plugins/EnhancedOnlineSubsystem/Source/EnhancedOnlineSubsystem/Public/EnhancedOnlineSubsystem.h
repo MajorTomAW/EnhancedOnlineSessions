@@ -6,7 +6,7 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogEnhancedSubsystem, Log, All);
 
-class FEnhancedOnlineSessionsModule : public IModuleInterface
+class FEnhancedOnlineSubsystemModule : public IModuleInterface
 {
 public:
 
