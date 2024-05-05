@@ -28,6 +28,11 @@ The entire online service logic is stored into a custom ```UGameInstanceSubsyste
 >       2.3 [Find Sessions](#find-sessions)  
 > 1. __Identity__  
 >       &nbsp;3.1 [Login User](#login)  
+>       &nbsp;3.2 [Kick Player](#kick-player)  
+>       &nbsp;3.2 [Ban Player](#ban-player)  
+>       &nbsp;3.2 [Change Player Name](#change-player-name)  
+> 1. __Friends__  
+>       &nbsp;3.2 [Coming Soon...](#friends)  
 
 <a name="setup"></a>
 # 1.1 Configure your Project
