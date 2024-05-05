@@ -68,7 +68,7 @@ To host a Session you need to construct an ``OnlineHostSessionRequest.``
 | __Max Player Count:__ | The maximum number of players that can be in the Session.
 | __Map Id:__ | Primary Asset Structure of the map you want to travel to, when the Session gets created.
 | __Friendly Name:__ | The friendly name of the session that will be used to display the Session name in the UI.
-| __Search Keyword:__ | The searchkeyword can be used for different szenarios. If you use EOS you will notice that this is the official SEARCH_KEYWORD combined with the Session. However you can also use it with any other online subsystem to filter your Session Results, depending on what Sessions you want to find
+| __Search Keyword:__ | The searchkeyword can be used for different szenarios. If you use EOS you will notice that this is the official ``SEARCH_KEYWORD`` combined with the Session. However you can also use it with any other online subsystem to filter your Session Results, depending on what Sessions you want to find
 | __Use Lobbies if Available:__ | Sets if the session should use player hosted Lobbies.
 | __Use Voice Chat if Available:__ | Some online services provide Voice Chat. This Settings defines if we use the Voice Chat.
 | __Game Mode Advertisement Name:__ | The advertisement name of the game mode that your session currently has. Can be used to advertise your session like _Team Deathmatch_, etc.
@@ -88,7 +88,7 @@ Very similar to [Host Online Session](#host-session), this takes in a few parame
 | __Online Mode__ | Defines the online mode of the session. Offline/Online/LAN.
 | __Max Player Count:__ | The maximum number of players that can be in the Session.
 | __Friendly Name:__ | The friendly name of the session that will be used to display the Session name in the UI.
-| __Search Keyword:__ | The searchkeyword can be used for different szenarios. If you use EOS you will notice that this is the official SEARCH_KEYWORD combined with the Session. However you can also use it with any other online subsystem to filter your Session Results, depending on what Sessions you want to find
+| __Search Keyword:__ | The searchkeyword can be used for different szenarios. If you use EOS you will notice that this is the official ``SEARCH_KEYWORD`` combined with the Session. However you can also use it with any other online subsystem to filter your Session Results, depending on what Sessions you want to find
 | __Use Voice Chat if Available:__ | Some online services provide Voice Chat. This Settings defines if we use the Voice Chat.
 | __Game Mode Advertisement Name:__ | The advertisement name of the game mode that your session currently has. Can be used to advertise your session like _Team Deathmatch_, etc.
 | __Is Presence:__ | Defines if the hosted session should use Presence (Account Services)
