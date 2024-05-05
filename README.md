@@ -34,7 +34,7 @@ The entire online service logic is stored into a custom GameInstanceSubsystem.
     Identity
   </summary>
   <br>
-    - Players can be kicked or banned out of the lobby.
+    - Players can be kicked or banned out of the lobby. <br>
     - Change the native player name on runtime.
 </details>
 <details>
