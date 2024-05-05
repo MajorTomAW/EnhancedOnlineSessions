@@ -105,3 +105,5 @@ Very similar to [Host Online Session](#host-session), this takes in a few parame
 | __Is Presence:__ | Defines if the hosted session should use Presence (Account Services)
 | __Allow Join in Progress:__ | Sets if other players can join the session when the session already is in progress. This can be used to disable joining when your game has been started.
 | __On Succeeded Delegate:__ | This Delegate will be called whenever the lobby creation was a success.
+
+Currently in progress...
