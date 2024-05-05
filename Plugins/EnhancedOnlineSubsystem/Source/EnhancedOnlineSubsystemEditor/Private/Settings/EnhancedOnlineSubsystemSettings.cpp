@@ -83,7 +83,7 @@ void UEnhancedOnlineSubsystemSettings::UpdateSubsystemSettings()
 	});
 
 	/** EOS */
-	TMap<FString, TMap<FString, FString>> SubsystemEOSSettings;
+	FSubsystemSetting SubsystemEOSSettings;
 	
 	SubsystemEOSSettings.Add(TEXT("OnlineSubsystem"), TMap<FString, FString>{
 		{ TEXT("DefaultPlatformService"), GetDefaultPlatformService(SupportedSubsystem) },
