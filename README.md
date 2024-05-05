@@ -17,6 +17,7 @@ The entire online service logic is stored into a custom ```UGameInstanceSubsyste
 # Documentation
 > 1. __Setup__  
 > &nbsp;1.1 [Configure your Project using the Online Subsystem of your Choice](#setup)  
+> &nbsp;1.2 [Structure of the Enhanced Sessions](#structure)  
 > 1. __Sessions__  
 >       2.1 Host Online Sessions  
 >       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2.1.1 [Host Session](#host-session)  
@@ -27,7 +28,7 @@ The entire online service logic is stored into a custom ```UGameInstanceSubsyste
 >       &nbsp;3.1 [Login User](#login)  
 
 <a name="setup"></a>
-# 1. Configure your Project using the Online Subsystem of your Choice
+# 1.1 Configure your Project using the Online Subsystem of your Choice
 In ``Project Settings > Plugins`` there is a section called ``Online Enhanced Subsystem.``  
   
 ![image](https://github.com/MajorTomAW/EnhancedOnlineSessions/assets/96875345/19cb6a21-84a1-4311-bea7-6760974f1d31)
@@ -37,11 +38,22 @@ This will write the changes directly into the ``DefaultEngine.ini`` so you wont 
 
 📝You will be prompted to restart the Editor after.
 
+<a name="structure"></a>
+# 1.2 Structure of the Enhanced Sessions
+💡The Enhanced Sessions Subsystem follows a consistent structure.  
+All the necessary functions are stored inside the ``EnhancedOnlineSubsystem``  
+
+![image](https://github.com/MajorTomAW/EnhancedOnlineSessions/assets/96875345/356ce3f8-b657-4a6b-92de-469b20b231dc)
+
+These function will always take in a request which defines the action that you want to do.  
+Every request will have multiple callabacks, based on the request type, that you can bind functions to.  
+However, every request will have an ``OnFailedDelegate`` which will be called if the request fails and the log why the request may have failed will be passed through the delegate.
+
+
 # 2.1 Online Sessions
-To Host an Online Session you need to call the ``HostOnlineSession`` function.  
-This takes in a ``HostSessionRequest.``  
-These request will follow the same structure for the rest of the subsystem.  
-The ``OnFailedDelegate`` will always get called when a request fails and the log why the request may have failed will be passed through the delegate.  
+To Host an Online Session you need to call the ``HostOnlineSession`` function which you can find in the ``EnhancedOnlineSubsystem``
+This takes in a ``HostSessionRequest.`` There are two different types of session you can host:
+
 <a name="host-session"></a>
 ## 2.1.1 Host Session
 To host a Session you need to construct an ``OnlineHostSessionRequest.``  
@@ -63,7 +75,7 @@ To host a Session you need to construct an ``OnlineHostSessionRequest.``
 
 <a name="host-p2p-lobby"></a>
 ## 2.1.2 Host Peer 2 Peer Lobby
-To host a Peer 2 Peer Lobby you need to construct an ``OnlineHostP2PLobbyRequest``  
+To host a Peer 2 Peer Lobby you need to construct an ``OnlineHostP2PLobbyRequest.``  
 
 ![image](https://github.com/MajorTomAW/EnhancedOnlineSessions/assets/96875345/8756fae9-c7b8-43ad-9c91-74f7317200ab)
 
