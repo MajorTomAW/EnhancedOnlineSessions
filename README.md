@@ -13,6 +13,8 @@ Including platform specific settings which can be changed inside the ``Editor.``
 
 Well my goal was to make this plugin as modular as possible that it works with any other project.  
 The entire online service logic is stored into a custom ```UGameInstanceSubsystem.```
+
+💡 Suggestions or Feedback is much appreciated: [My Discord Account](https://discord.com/users/959875236403220490). Feel free to message me any time! 🙂
 <a name="documentation"></a>
 # Documentation
 > 1. __Setup__  
