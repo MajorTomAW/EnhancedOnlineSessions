@@ -126,7 +126,15 @@ void UEnhancedOnlineSessionsSubsystem::HandleHostOnlineLobbyComplete(FName Sessi
 		}
 		
 		UE_LOG(LogEnhancedSubsystem, Log, TEXT("Lobby created successfully."));
-		GetWorld()->Listen(PendingTravelURL);
+		
+		if (!PendingTravelURL.ToString().IsEmpty())
+		{
+			GetWorld()->Listen(PendingTravelURL);
+		}
+		else
+		{
+			UE_LOG(LogEnhancedSubsystem, Error, TEXT("No travel URL was set."));
+		}
 	}
 	else
 	{
@@ -198,7 +206,11 @@ void UEnhancedOnlineSessionsSubsystem::HandleHostOnlineSessionComplete(FName Ses
 	if (bWasSuccessful)
 	{
 		UE_LOG(LogEnhancedSubsystem, Log, TEXT("Session created successfully."));
-		GetWorld()->ServerTravel(PendingTravelURL.ToString());
+
+		if (!PendingTravelURL.ToString().IsEmpty())
+		{
+			GetWorld()->ServerTravel(PendingTravelURL.ToString());	
+		}
 	}
 	else
 	{
@@ -372,4 +384,55 @@ void UEnhancedOnlineSessionsSubsystem::HandleJoinSessionCompleted(FName SessionN
 
 	Sessions->ClearOnJoinSessionCompleteDelegate_Handle(JoinSessionDelegateHandle);
 	JoinSessionDelegateHandle.Reset();
+}
+
+void UEnhancedOnlineSessionsSubsystem::StartOnlineSession(UEnhancedOnlineRequest_StartSession* Request)
+{
+	if (Request == nullptr)
+	{
+		UE_LOG(LogEnhancedSubsystem, Error, TEXT("Start Online Session was called with a bad request."));
+		return;
+	}
+
+	IOnlineSessionPtr Sessions = Request->Sessions;
+
+	if (Sessions == nullptr)
+	{
+		UE_LOG(LogEnhancedSubsystem, Error, TEXT("Start Online Session was called with a bad session interface."));
+		Request->OnRequestFailedDelegate.Broadcast(TEXT("Start Online Session was called with a bad session interface."));
+		return;
+	}
+
+	StartSessionDelegateHandle = Sessions->AddOnStartSessionCompleteDelegate_Handle(FOnStartSessionCompleteDelegate::CreateUObject(this, &ThisClass::HandleStartOnlineSessionComplete));
+	PendingStartSessionRequest = Request;
+
+	if (!Sessions->StartSession(NAME_GameSession))
+	{
+		UE_LOG(LogEnhancedSubsystem, Error, TEXT("Failed to start session."));
+		Request->OnRequestFailedDelegate.Broadcast(TEXT("Failed to start session."));
+
+		Sessions->ClearOnStartSessionCompleteDelegate_Handle(StartSessionDelegateHandle);
+		StartSessionDelegateHandle.Reset();
+	}
+}
+
+void UEnhancedOnlineSessionsSubsystem::HandleStartOnlineSessionComplete(FName SessionName, bool bWasSuccessful)
+{
+	if (PendingStartSessionRequest == nullptr)
+	{
+		UE_LOG(LogEnhancedSubsystem, Error, TEXT("Start Online Session was called with a bad request."));
+		return;
+	}
+
+	if (bWasSuccessful)
+	{
+		PendingStartSessionRequest->OnStartSessionCompleted.Broadcast(SessionName, true);
+	}
+	else
+	{
+		PendingStartSessionRequest->OnRequestFailedDelegate.Broadcast(TEXT("Failed to start session."));
+	}
+
+	PendingStartSessionRequest->Sessions->ClearOnStartSessionCompleteDelegate_Handle(StartSessionDelegateHandle);
+	StartSessionDelegateHandle.Reset();
 }

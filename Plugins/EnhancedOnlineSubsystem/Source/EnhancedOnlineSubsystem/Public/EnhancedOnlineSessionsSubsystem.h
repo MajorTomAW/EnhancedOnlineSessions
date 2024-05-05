@@ -7,6 +7,7 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "EnhancedOnlineSessionsSubsystem.generated.h"
 
+class UEnhancedOnlineRequest_StartSession;
 class UEnhancedOnlineRequest_LogoutUser;
 class UEnhancedOnlineRequest_JoinSession;
 class UEnhancedSessionSearchResult;
@@ -63,6 +64,12 @@ public:
 	virtual void HostOnlineSession(UEnhancedOnlineRequest_Session* Request);
 
 	/**
+	 * Starts the current online session
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Online|EnhancedSessions|Sessions")
+	virtual void StartOnlineSession(UEnhancedOnlineRequest_StartSession* Request);
+
+	/**
 	 * Finds online sessions.
 	 * @param Request	The request object that contains the search settings.
 	 */
@@ -87,9 +94,11 @@ protected:
 	FDelegateHandle HostSessionDelegateHandle;
 	FDelegateHandle FindSessionsDelegateHandle;
 	FDelegateHandle JoinSessionDelegateHandle;
+	FDelegateHandle StartSessionDelegateHandle;
 
 	virtual void HandleHostOnlineLobbyComplete(FName SessionName, bool bWasSuccessful);
 	virtual void HandleHostOnlineSessionComplete(FName SessionName, bool bWasSuccessful);
+	virtual void HandleStartOnlineSessionComplete(FName SessionName, bool bWasSuccessful);
 	virtual void HandleFindOnlineSessionsComplete(bool bWasSuccessful);
 	virtual void HandleJoinSessionCompleted(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 
@@ -122,6 +131,10 @@ private:
 	/** The request object for the pending logout */
 	UPROPERTY()
 	TObjectPtr<UEnhancedOnlineRequest_LogoutUser> PendingLogoutRequest;
+
+	/** The request object for the pending join session */
+	UPROPERTY()
+	TObjectPtr<UEnhancedOnlineRequest_StartSession> PendingStartSessionRequest;
 
 	/** Session settings for the pending session */
 	TSharedPtr<FEnhancedOnlineSessionSettings> SessionSettings;

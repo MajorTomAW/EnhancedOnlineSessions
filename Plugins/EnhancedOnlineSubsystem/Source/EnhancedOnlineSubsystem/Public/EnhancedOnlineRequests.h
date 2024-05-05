@@ -244,6 +244,44 @@ public:
 	}
 };
 
+/**
+ * Request class used to start an online session
+ */
+UCLASS()
+class UEnhancedOnlineRequest_StartSession : public UEnhancedOnlineRequestBase
+{
+	GENERATED_BODY()
+
+public:
+	//~ Begin UEnhancedOnlineRequestBase Interface
+	virtual void ConstructRequest() override
+	{
+		Super::ConstructRequest();
+
+		Sessions = OnlineSub->GetSessionInterface();
+		check(Sessions);
+	}
+
+	virtual void InvalidateRequest() override
+	{
+		if (OnStartSessionCompleted.IsBound())
+		{
+			OnStartSessionCompleted.RemoveAll(this);
+			OnStartSessionCompleted.Clear();
+		}
+		
+		Super::InvalidateRequest();
+	}
+	//~ End UEnhancedOnlineRequestBase Interface
+	
+	FOnStartSessionComplete OnStartSessionCompleted;
+
+protected:
+	friend UEnhancedOnlineSessionsSubsystem;
+
+	/** Online session pointer */
+	IOnlineSessionPtr Sessions;
+};
 
 /**
  * Request class used to create an online lobby

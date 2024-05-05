@@ -6,6 +6,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "EnhancedSessionsLibrary.generated.h"
 
+class UEnhancedOnlineRequest_StartSession;
 class UEnhancedOnlineRequest_JoinSession;
 class UEnhancedOnlineRequest_FindSessions;
 class UEnhancedSessionSearchResult;
@@ -28,6 +29,12 @@ DECLARE_DYNAMIC_DELEGATE_OneParam(FBPOnRequestFailedWithLog, const FString&, Rea
  * @param LocalUserIndex	The index of the local user who made the request
  */
 DECLARE_DYNAMIC_DELEGATE_TwoParams(FBPOnHostLobbyRequestSucceeded, const FName&, SessionName, const int32&, LocalUserIndex);
+
+/**
+ * Delegate for when starting a session request succeeds
+ * @param SessionName	The name of the session
+ */
+DECLARE_DYNAMIC_DELEGATE_OneParam(FBPOnStartSessionRequestSucceeded, const FName&, SessionName);
 
 /**
  * Delegate for when a find sessions request succeeds
@@ -199,5 +206,22 @@ public:
 		UEnhancedSessionSearchResult* SessionToJoin,
 		const int32 LocalUserIndex,
 		const bool bInvalidateOnCompletion,
+		FBPOnRequestFailedWithLog OnFailedDelegate);
+
+	/**
+	 * Constructs a request to start an online session
+	 * @param WorldContextObject	The world context object, IF YOU SEE THIS IN BLUEPRINTS, YOU ARE DOING SOMETHING WRONG >:(
+	 * @param bInvalidateOnCompletion	Whether to invalidate the request when it's completed
+	 * @param OnSucceededDelegate	Delegate to call when the request succeeds
+	 * @param OnFailedDelegate		Delegate to call when the request fails
+	 * @return The request object
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Online|EnhancedSessions|Sessions", meta =
+		(WorldContext = "WorldContextObject", Keywords = "Make, Create, New", DisplayName = "Construct Online Start Session Request",
+			AdvancedDisplay = "bInvalidateOnCompletion", bInvalidateOnCompletion = "true"))
+	static UPARAM(DisplayName = "Request") UEnhancedOnlineRequest_StartSession* ContstructOnlineStartSessionRequest(
+		UObject* WorldContextObject,
+		const bool bInvalidateOnCompletion,
+		FBPOnStartSessionRequestSucceeded OnSucceededDelegate,
 		FBPOnRequestFailedWithLog OnFailedDelegate);
 };

@@ -5,6 +5,7 @@
 
 #include "EnhancedOnlineRequests.h"
 
+
 void UEnhancedSessionsLibrary::SetupFailureDelegate(UEnhancedOnlineRequestBase* Request, FBPOnRequestFailedWithLog OnFailedDelegate)
 {
 	Request->OnRequestFailedDelegate.AddLambda(
@@ -148,5 +149,30 @@ UEnhancedOnlineRequest_JoinSession* UEnhancedSessionsLibrary::ConstructOnlineJoi
 	Request->SessionToJoin = SessionToJoin;
 
 	SetupFailureDelegate(Request, OnFailedDelegate);
+	return Request;
+}
+
+UEnhancedOnlineRequest_StartSession* UEnhancedSessionsLibrary::ContstructOnlineStartSessionRequest(
+	UObject* WorldContextObject, const bool bInvalidateOnCompletion,
+	FBPOnStartSessionRequestSucceeded OnSucceededDelegate, FBPOnRequestFailedWithLog OnFailedDelegate)
+{
+	UEnhancedOnlineRequest_StartSession* Request = NewObject<UEnhancedOnlineRequest_StartSession>(WorldContextObject);
+	Request->ConstructRequest();
+
+	Request->bInvalidateOnCompletion = bInvalidateOnCompletion;
+
+	SetupFailureDelegate(Request, OnFailedDelegate);
+
+	Request->OnStartSessionCompleted.AddLambda(
+		[OnSucceededDelegate, Request] (FName SessionName, bool bWasSuccessful)
+		{
+			if (OnSucceededDelegate.IsBound())
+			{
+				OnSucceededDelegate.Execute(SessionName);
+			}
+
+			Request->CompleteRequest();
+		});
+	
 	return Request;
 }
