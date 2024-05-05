@@ -15,6 +15,8 @@ Well my goal was to make this plugin as modular as possible that it works with a
 The entire online service logic is stored into a custom ```UGameInstanceSubsystem.```
 
 💡 Suggestions or Feedback is much appreciated: [My Discord Account](https://discord.com/users/959875236403220490). Feel free to DM me any time! 🙂
+
+Download the latest preview [here.](https://github.com/MajorTomAW/EnhancedOnlineSessions/releases/tag/Preview)
 <a name="documentation"></a>
 # Documentation
 > 1. __Setup__  
