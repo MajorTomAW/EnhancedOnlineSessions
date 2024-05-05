@@ -23,7 +23,7 @@ Download the latest preview [here.](https://github.com/MajorTomAW/EnhancedOnline
 > &nbsp;1.1 [Configure your Project using the Online Subsystem of your Choice](#setup)  
 > &nbsp;1.2 [Structure of the Enhanced Sessions](#structure)  
 > 1. __Sessions__  
->       2.1 Host Online Sessions  
+>       2.1 [Host Online Sessions](#online-sessions)  
 >       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2.1.1 [Host Session](#host-session)  
 >       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2.1.2 [Host Peer 2 Peer Lobby](#host-p2p-lobby)  
 >       2.2 [Start Session](#start-session)  
@@ -58,7 +58,7 @@ These function will always take in a request, which defines the action that you 
 Every request will have multiple callbacks, based on the request type, that you can bind functions to.  
 However, every request will have an ``OnFailedDelegate`` which will be called if the request fails and the log why the request may have failed will be passed through the delegate.
 
-
+<a name="online-sessions"></a>
 # 2.1 Online Sessions
 To Host an Online Session you need to call the ``HostOnlineSession`` function which you can find in the ``EnhancedOnlineSubsystem.``  
 
