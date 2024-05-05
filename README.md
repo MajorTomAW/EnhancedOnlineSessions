@@ -1,6 +1,6 @@
 # Enhanced Online Sessions Plugin
 
-### Lates Changes
+### Latest Changes
 Project Settings to customize the online subsystem used without having to change the DefaultEngine.ini
 
 Unreal Engine Plugin used to manage an online subsystem <br>
