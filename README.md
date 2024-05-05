@@ -29,19 +29,28 @@ The entire online service logic is stored into a custom GameInstanceSubsystem.
     - Required by EOS. <br>
     - Supports "Account Portal", "Developer", "External Auth", "Persistant Auth", and more.
 </details>
+<detail>
+  <summary>
+    Identity
+  </summary>
+  <br>
+    - Players can be kicked or banned out of the lobby.
+    - Change the native player name on runtime.
+</detail>
 <details>
   <summary>
-    Finding and Creating Online/Offline Sessions
+    Finding, Creating and Starting Online/Offline Sessions
   </summary>
   <br>
     - Find sessions hosted in your online service. Or create a new one<br>
     - Supports LAN, Offline and Online sessions. <br>
     - Expanded Functionality for EOS (SEARCH_KEYWORDS, etc). <br>
+    - Allows you to start the session and set the session state to "in progress"
 </details>
 <details>
   <summary>
     Friends
   </summary>
   <br>
-    - Read the players friends list
+    - COMING SOON: Read the players friends list
 </details>
