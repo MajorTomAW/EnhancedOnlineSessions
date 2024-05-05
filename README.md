@@ -30,7 +30,7 @@ The entire online service logic is stored into a custom ```UGameInstanceSubsyste
 >       &nbsp;3.1 [Login User](#login)  
 
 <a name="setup"></a>
-# 1.1 Configure your Project using the Online Subsystem of your Choice
+# 1.1 Configure your Project
 In ``Project Settings > Plugins`` there is a section called ``Online Enhanced Subsystem.``  
   
 ![image](https://github.com/MajorTomAW/EnhancedOnlineSessions/assets/96875345/19cb6a21-84a1-4311-bea7-6760974f1d31)
