@@ -102,7 +102,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Online|EnhancedSessions|Sessions", meta =
 		(WorldContext = "WorldContextObject", Keywords = "Make, Create, New",
 			AdvancedDisplay = "bInvalidateOnCompletion, LocalUserIndex",
-			MaxPlayerCount = "4", SearchKeyword = "default", GameModeAdvertisementName = "default", bInvalidateOnCompletion = "true", LocalUserIndex = "0", bAllowJoinInProgress = "true"))
+			MaxPlayerCount = "4", SearchKeyword = "default", GameModeAdvertisementName = "default", bInvalidateOnCompletion = "true", LocalUserIndex = "0", bAllowJoinInProgress = "true", bUseLobbiesIfAvailable = "false", bUseVoiceChatIfAvailable = "false"))
 	static UPARAM(DisplayName = "Request") UEnhancedOnlineRequest_CreateSession* ConstructOnlineHostSessionRequest(
 		UObject* WorldContextObject,
 		const EEnhancedSessionOnlineMode OnlineMode,

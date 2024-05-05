@@ -56,7 +56,7 @@ UEnhancedOnlineSubsystemSettings::UEnhancedOnlineSubsystemSettings(const FObject
 void UEnhancedOnlineSubsystemSettings::UpdateSubsystemSettings()
 {
 	/** STEAM */
-	TMap<FString, TMap<FString, FString>> SubsystemSteamSettings;
+	FSubsystemSetting SubsystemSteamSettings;
 	
 	SubsystemSteamSettings.Add(TEXT("OnlineSubsystem"), TMap<FString, FString>{
 		{ TEXT("DefaultPlatformService"), GetDefaultPlatformService(SupportedSubsystem) },
@@ -122,7 +122,7 @@ void UEnhancedOnlineSubsystemSettings::LoadSubsystemSettings()
 
 	// Load the Supported Subsystem from the EnhancedOnlineSubsystemSettings using GConfig
 	FString DefaultEngineIni = FPaths::SourceConfigDir() / TEXT("DefaultEngine.ini");
-	FConfigCacheIni::NormalizeConfigIniPath(DefaultEngineIni);
+	DefaultEngineIni = FConfigCacheIni::NormalizeConfigIniPath(DefaultEngineIni);
 
 	FString DefaultPlatformService;
 	GConfig->GetString(
@@ -149,7 +149,7 @@ void UEnhancedOnlineSubsystemSettings::PostEditChangeProperty(FPropertyChangedEv
 	{
 		UEnhancedOnlineSubsystemSettings* Settings = GetMutableDefault<UEnhancedOnlineSubsystemSettings>();
 		FString DefaultEngineIni = FPaths::SourceConfigDir() / TEXT("DefaultEngine.ini");
-		FConfigCacheIni::NormalizeConfigIniPath(DefaultEngineIni);
+		DefaultEngineIni = FConfigCacheIni::NormalizeConfigIniPath(DefaultEngineIni);
 
 		UpdateSubsystemSettings();
 

@@ -28,7 +28,9 @@ class ENHANCEDONLINESUBSYSTEMEDITOR_API UEnhancedOnlineSubsystemSettings : publi
 public:
 	UEnhancedOnlineSubsystemSettings(const FObjectInitializer& ObjectInitializer);
 	
-	TMap<ESupportedSubsystem, TMap<FString, TMap<FString, FString>>> SubsystemSettings;
+	typedef TMap<FString, TMap<FString, FString>> FSubsystemSetting;
+	
+	TMap<ESupportedSubsystem, FSubsystemSetting> SubsystemSettings;
 
 	//~ Begin UObject Interface
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
@@ -44,7 +46,7 @@ public:
 public:
 
 	/** Settings */
-	UPROPERTY(Config, EditAnywhere, Category = "General")
+	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "General")
 	ESupportedSubsystem SupportedSubsystem;
 
 	/** Enable or disable the online subsystem */
