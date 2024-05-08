@@ -70,6 +70,7 @@ There are two different types of sessions you can host:
 <a name="host-session"></a>
 ## 2.1.1 Host Session
 To host a Session you need to construct an ``OnlineHostSessionRequest.``  
+Note that this will automatically travel to the map you selected in ``Map Id.``  
 
 ![image](https://github.com/MajorTomAW/EnhancedOnlineSessions/assets/96875345/9c594d71-6ae7-4f2d-9a4b-c8a892f28eb1)
 
@@ -89,6 +90,7 @@ To host a Session you need to construct an ``OnlineHostSessionRequest.``
 <a name="host-p2p-lobby"></a>
 ## 2.1.2 Host Peer 2 Peer Lobby
 To host a Peer 2 Peer Lobby you need to construct an ``OnlineHostP2PLobbyRequest.``  
+💡Note that this will NOT travel to a different map, as the P2P Lobby stays in the current level and you need to server travel manually.  
 
 ![image](https://github.com/MajorTomAW/EnhancedOnlineSessions/assets/96875345/8756fae9-c7b8-43ad-9c91-74f7317200ab)
 
@@ -106,4 +108,4 @@ Very similar to [Host Online Session](#host-session), this takes in a few parame
 | __Allow Join in Progress:__ | Sets if other players can join the session when the session already is in progress. This can be used to disable joining when your game has been started.
 | __On Succeeded Delegate:__ | This Delegate will be called whenever the lobby creation was a success.
 
-Currently in progress...
+Rest of the documenation is currently in progress...
