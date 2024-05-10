@@ -22,6 +22,7 @@ Download the latest preview [here.](https://github.com/MajorTomAW/EnhancedOnline
 > 1. __Setup__  
 > &nbsp;1.1 [Configure your Project using the Online Subsystem of your Choice](#setup)  
 > &nbsp;1.2 [Structure of the Enhanced Sessions](#structure)  
+> &nbsp;1.3 [Session Maps](#session-maps)  
 > 1. __Sessions__  
 >       2.1 [Host Online Sessions](#online-sessions)  
 >       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2.1.1 [Host Session](#host-session)  
@@ -56,7 +57,22 @@ All the necessary functions are stored inside the ``EnhancedOnlineSubsystem``
 
 These function will always take in a request object, which defines the action that you want to perform.  
 Every request will have multiple callbacks, that you can bind functions to (Based on the request type).  
-However, every request will have an ``OnFailedDelegate`` which will be called if the request fails and the log why the request may have failed will be passed through.
+However, every request will have an ``OnFailedDelegate`` which will be called if the request fails and the log why the request may have failed will be passed through.  
+
+<a name="session-maps"></a>
+# 1.3 Session Maps with the Asset manager
+If you want to use a Level for an Online Session you would need to tell the ``Asset Manager`` about its existence.  
+To do that you would need to go inside your ``Project Settings -> Asset Manager``  
+
+![Screenshot 2024-05-10 022213](https://github.com/MajorTomAW/EnhancedOnlineSessions/assets/96875345/1f8a52ef-1e61-43a5-b7ce-4b6062bf3112)  
+
+And then make sure to uncheck ``Is Editor Only`` and add the Directory where your Level is located.  
+
+![Screenshot 2024-05-10 022219](https://github.com/MajorTomAW/EnhancedOnlineSessions/assets/96875345/4a105936-6e99-42e4-9346-188c4b356654)  
+
+
+
+
 
 <a name="online-sessions"></a>
 # 2.1 Online Sessions
