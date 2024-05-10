@@ -40,6 +40,27 @@ public:
 		const int32 LocalUserIndex,
 		const bool bInvalidateOnCompletion,
 		FBPOnGetFriendsListCompleted OnCompletedDelegate,
-		FBPOnRequestFailedWithLog OnFailedDelegate
-		);
+		FBPOnRequestFailedWithLog OnFailedDelegate);
+	
+
+	/**
+	 * Construct a request to find a session of a single friend
+	 * @param WorldContextObject	World context
+	 * @param FriendId	The friend to search for
+	 * @param LocalUserIndex	The index of the local user who made the request
+	 * @param bInvalidateOnCompletion	Should the request be invalidated on completion
+	 * @param OnCompletedDelegate	Delegate to call when the request completes
+	 * @param OnFailedDelegate	Delegate to call when the request fails
+	 * @return The request object
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Online|EnhancedFriends|Friends", meta =
+		(WorldContext = "WorldContextObject", DisplayName = "Construct Find Friend Session Request", Keywords = "Make, Create, New",
+			AdvancedDisplay = "bInvalidateOnCompletion, LocalUserIndex"))
+	static UEnhancedOnlineRequest_FindFriendSession* ConstructOnlineFindFriendSessionRequest(
+		UObject* WorldContextObject,
+		const FUniqueNetIdRepl& FriendId,
+		const int32 LocalUserIndex,
+		const bool bInvalidateOnCompletion,
+		FBPOnFindSessionsSuceeeded OnCompletedDelegate,
+		FBPOnRequestFailedWithLog OnFailedDelegate);
 };

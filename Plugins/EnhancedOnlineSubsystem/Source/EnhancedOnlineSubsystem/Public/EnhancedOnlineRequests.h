@@ -78,16 +78,10 @@ protected:
 };
 
 /**
- * Delegate for when a session is created
- * @param LocalUserIndex	The index of the local user who created the session request
- */
-DECLARE_MULTICAST_DELEGATE_TwoParams(FOnEnhancedCreateSessionCompleted, int32 /* Local User Index */ , const FName /* Session Name */);
-
-/*
- * Base session request class, used to create a session
+ * A request object that uses the online session interface
  */
 UCLASS()
-class UEnhancedOnlineRequest_Session : public UEnhancedOnlineRequestBase
+class UEnhancedOnlineSessionRequestBase : public UEnhancedOnlineRequestBase
 {
 	GENERATED_BODY()
 
@@ -100,7 +94,31 @@ public:
 		Sessions = OnlineSub->GetSessionInterface();
 		check(Sessions);
 	}
+	//~ End UEnhancedOnlineRequestBase Interface
 
+protected:
+	friend UEnhancedOnlineSessionsSubsystem;
+
+	/** Online session pointer */
+	IOnlineSessionPtr Sessions;
+};
+
+/**
+ * Delegate for when a session is created
+ * @param LocalUserIndex	The index of the local user who created the session request
+ */
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnEnhancedCreateSessionCompleted, int32 /* Local User Index */ , const FName /* Session Name */);
+
+/*
+ * Base session request class, used to create a session
+ */
+UCLASS()
+class UEnhancedOnlineRequest_Session : public UEnhancedOnlineSessionRequestBase
+{
+	GENERATED_BODY()
+
+public:
+	//~ Begin UEnhancedOnlineRequestBase Interface
 	virtual void InvalidateRequest() override
 	{
 		if (OnCreateSessionCompleted.IsBound())
@@ -201,12 +219,6 @@ public:
 		return false;
 #endif
 	}
-
-protected:
-	friend UEnhancedOnlineSessionsSubsystem;
-
-	/** Online session pointer */
-	IOnlineSessionPtr Sessions;
 };
 
 /**
@@ -258,20 +270,12 @@ public:
  * Request class used to start an online session
  */
 UCLASS()
-class UEnhancedOnlineRequest_StartSession : public UEnhancedOnlineRequestBase
+class UEnhancedOnlineRequest_StartSession : public UEnhancedOnlineSessionRequestBase
 {
 	GENERATED_BODY()
 
 public:
 	//~ Begin UEnhancedOnlineRequestBase Interface
-	virtual void ConstructRequest() override
-	{
-		Super::ConstructRequest();
-
-		Sessions = OnlineSub->GetSessionInterface();
-		check(Sessions);
-	}
-
 	virtual void InvalidateRequest() override
 	{
 		if (OnStartSessionCompleted.IsBound())
@@ -285,12 +289,6 @@ public:
 	//~ End UEnhancedOnlineRequestBase Interface
 	
 	FOnStartSessionComplete OnStartSessionCompleted;
-
-protected:
-	friend UEnhancedOnlineSessionsSubsystem;
-
-	/** Online session pointer */
-	IOnlineSessionPtr Sessions;
 };
 
 /**
@@ -480,7 +478,7 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnEnhancedFindOnlineSessionsCompleted, cons
  * Request class used to find online sessions
  */
 UCLASS()
-class UEnhancedOnlineRequest_FindSessions : public UEnhancedOnlineRequestBase
+class UEnhancedOnlineRequest_FindSessions : public UEnhancedOnlineSessionRequestBase
 {
 	GENERATED_BODY()
 
@@ -509,14 +507,6 @@ public:
 	FOnEnhancedFindOnlineSessionsCompleted OnFindOnlineSessionsCompleted;
 
 public:
-	virtual void ConstructRequest() override
-	{
-		Super::ConstructRequest();
-
-		Sessions = OnlineSub->GetSessionInterface();
-		check(Sessions);
-	}
-
 	virtual void InvalidateRequest() override
 	{
 		Super::InvalidateRequest();
@@ -527,22 +517,14 @@ public:
 			OnFindOnlineSessionsCompleted.Clear();
 		}
 	}
-
-private:
-	friend UEnhancedOnlineSessionsSubsystem;
-	IOnlineSessionPtr Sessions;
 };
-
-/**
- * Request class used to find a friend's online session
- */
 
 
 /**
  * Request class used to join an online session
  */
 UCLASS()
-class UEnhancedOnlineRequest_JoinSession : public UEnhancedOnlineRequestBase
+class UEnhancedOnlineRequest_JoinSession : public UEnhancedOnlineSessionRequestBase
 {
 	GENERATED_BODY()
 
@@ -550,19 +532,6 @@ public:
 	/** The session to join */
 	UPROPERTY(BlueprintReadWrite, Category = "Online|Request")
 	TObjectPtr<UEnhancedSessionSearchResult> SessionToJoin;
-
-public:
-	virtual void ConstructRequest() override
-	{
-		Super::ConstructRequest();
-
-		Sessions = OnlineSub->GetSessionInterface();
-		check(Sessions);
-	}
-
-private:
-	friend UEnhancedOnlineSessionsSubsystem;
-	IOnlineSessionPtr Sessions;
 };
 
 /**
@@ -676,3 +645,33 @@ private:
 	friend UEnhancedOnlineSessionsSubsystem;
 	IOnlineFriendsPtr Friends;
 };
+
+/**
+ * Request object used to find a friend's online session
+ */
+UCLASS()
+class UEnhancedOnlineRequest_FindFriendSession : public UEnhancedOnlineSessionRequestBase
+{
+	GENERATED_BODY()
+
+public:
+	/** List of friend ids to search for */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Online|Request")
+	FUniqueNetIdRepl FriendId;
+
+	/** Native delegate for when the request is completed */
+	FOnEnhancedFindOnlineSessionsCompleted OnFindFriendSessionCompleted;
+
+public:
+	virtual void InvalidateRequest() override
+	{
+		Super::InvalidateRequest();
+
+		if (OnFindFriendSessionCompleted.IsBound())
+		{
+			OnFindFriendSessionCompleted.RemoveAll(this);
+			OnFindFriendSessionCompleted.Clear();
+		}
+	}
+};
+

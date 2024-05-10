@@ -109,3 +109,87 @@ void UEnhancedOnlineSessionsSubsystem::HandleGetFriendsListComplete(int32 LocalU
 	PendingGetFriendsListRequest->CompleteRequest();
 	PendingGetFriendsListRequest = nullptr;
 }
+
+
+void UEnhancedOnlineSessionsSubsystem::FindFriendOnlineSessions(UEnhancedOnlineRequest_FindFriendSession* Request)
+{
+	if (Request == nullptr)
+	{
+		UE_LOG(LogEnhancedSubsystem, Error, TEXT("Find Friend Online Sessions was called with a bad request."));
+		return;
+	}
+
+	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(Request->GetWorld(), Request->LocalUserIndex);
+	if (PlayerController == nullptr)
+	{
+		UE_LOG(LogEnhancedSubsystem, Error, TEXT("Find Friend Online Sessions was called with a bad local user index."));
+		Request->OnRequestFailedDelegate.Broadcast(TEXT("Find Friend Online Sessions was called with a bad local user index."));
+		return;
+	}
+
+	ULocalPlayer* LocalPlayer = PlayerController->GetLocalPlayer();
+	if (LocalPlayer == nullptr)
+	{
+		UE_LOG(LogEnhancedSubsystem, Error, TEXT("Find Friend Online Sessions was called with a bad local user index: %d. Looks like the online service does not support that action?"), Request->LocalUserIndex);
+		Request->OnRequestFailedDelegate.Broadcast(FString::Printf(TEXT("Find Friend Online Sessions was called with a bad local user index: %d."), Request->LocalUserIndex));
+		return;
+	}
+
+	FindFriendOnlineSessionsInternal(LocalPlayer, Request);
+}
+
+void UEnhancedOnlineSessionsSubsystem::FindFriendOnlineSessionsInternal(ULocalPlayer* LocalPlayer, UEnhancedOnlineRequest_FindFriendSession* Request)
+{
+	check(Request->Sessions);
+
+	FindFriendSessionsDelegateHandle = Request->Sessions->AddOnFindFriendSessionCompleteDelegate_Handle(LocalPlayer->GetControllerId(), FOnFindFriendSessionCompleteDelegate::CreateUObject(this, &ThisClass::HandleFindFriendOnlineSessionsComplete));
+	PendingFindFriendSessionRequest = Request;
+
+	const bool bCalled = Request->Sessions->FindFriendSession(LocalPlayer->GetControllerId(), *Request->FriendId.GetUniqueNetId());
+
+	if (!bCalled)
+	{
+		UE_LOG(LogEnhancedSubsystem, Error, TEXT("Find Friend Online Sessions failed to call the find friend session function: NetId: %s, LocalUserIndex: %d"), *Request->FriendId.GetUniqueNetId()->ToString(), LocalPlayer->GetControllerId());
+		Request->OnRequestFailedDelegate.Broadcast(TEXT("Find Friend Online Sessions failed to call the find friend session function."));
+	}
+}
+
+void UEnhancedOnlineSessionsSubsystem::HandleFindFriendOnlineSessionsComplete(int32 LocalUserNum, bool bWasSuccessful, const TArray<FOnlineSessionSearchResult>& SessionInfo)
+{
+	if (PendingFindFriendSessionRequest == nullptr)
+	{
+		UE_LOG(LogEnhancedSubsystem, Error, TEXT("Find Friend Online Sessions completed with no pending request."));
+		return;
+	}
+
+	if (bWasSuccessful)
+	{
+		TArray<UEnhancedSessionSearchResult*> Results;
+		for (auto& SearchResult : SearchSettings->SearchResults)
+		{
+			UEnhancedSessionSearchResult* NewResult = NewObject<UEnhancedSessionSearchResult>(SearchSettings->Request);
+			NewResult->StoredSearchResult = SearchResult;
+			Results.Add(NewResult);
+
+			FString OwningUserId = TEXT("Uknown");
+			if (SearchResult.Session.OwningUserId.IsValid())
+			{
+				OwningUserId = SearchResult.Session.OwningUserId->ToString();
+			}
+				
+			UE_LOG(LogEnhancedSubsystem, Log, TEXT("\tFound Friend session (UserId: %s, UserName: %s, NumOpenPrivConns: %d, NumOpenPubConns: %d, Ping: %d ms"),
+			*OwningUserId,
+			*SearchResult.Session.OwningUserName,
+			SearchResult.Session.NumOpenPrivateConnections,
+			SearchResult.Session.NumOpenPublicConnections,
+			SearchResult.PingInMs);
+		}
+		
+		PendingFindFriendSessionRequest->OnFindFriendSessionCompleted.Broadcast(Results);
+	}
+	else
+	{
+		UE_LOG(LogEnhancedSubsystem, Error, TEXT("Find Friend Online Sessions failed: %i"), SessionInfo.Num());
+		PendingFindFriendSessionRequest->OnRequestFailedDelegate.Broadcast(TEXT("Find Friend Online Sessions failed."));
+	}
+}
