@@ -72,13 +72,15 @@ There are two different types of sessions you can host:
 To host a Session you need to construct an ``OnlineHostSessionRequest.``  
 Note that this will automatically travel to the map you selected in ``Map Id.``  
 
-![image](https://github.com/MajorTomAW/EnhancedOnlineSessions/assets/96875345/9c594d71-6ae7-4f2d-9a4b-c8a892f28eb1)
+![image](https://github.com/MajorTomAW/EnhancedOnlineSessions/assets/96875345/a08a4774-d208-45d3-9d47-74d5ef39d08d)
+
 
 | Parameter      | Description |
 | ----------- | ----------- |
-| __Online Mode__ | Defines the online mode of the session. You can choose from: Offline / Online / LAN.
+| __Online Mode__ | Defines the online mode of the session. You can choose from: Offline / Online / LAN.  The Online Mode: "Online" adds ``?listen`` to the travel url.
 | __Max Player Count:__ | The maximum number of players that can be in the Session.
 | __Map Id:__ | Primary Asset Structure of the map you want to travel to, when the Session gets created.
+| __Travel URL Operators:__ | Adds additional operators that will be apended to the Travel URL.
 | __Friendly Name:__ | The friendly name of the session that will be used to display the Session name in the UI.
 | __Search Keyword:__ | The searchkeyword can be used for different scenarios. If you use EOS you will notice that this is the official ``SEARCH_KEYWORD`` combined with the Session. However you can also use it with any other online subsystem to filter your Session Results, depending on what Sessions you want to find
 | __Use Lobbies if Available:__ | Sets if the session should use player hosted Lobbies.
