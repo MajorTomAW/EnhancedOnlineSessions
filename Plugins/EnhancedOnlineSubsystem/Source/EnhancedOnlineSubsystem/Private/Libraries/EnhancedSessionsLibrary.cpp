@@ -1,7 +1,7 @@
 // Copyright © 2024 MajorT. All rights reserved.
 
 
-#include "EnhancedSessionsLibrary.h"
+#include "Libraries/EnhancedSessionsLibrary.h"
 
 #include "EnhancedOnlineRequests.h"
 

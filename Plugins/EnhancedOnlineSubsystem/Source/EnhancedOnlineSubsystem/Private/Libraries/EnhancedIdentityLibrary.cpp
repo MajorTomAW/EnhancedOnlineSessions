@@ -1,9 +1,9 @@
 // Copyright © 2024 MajorT. All rights reserved.
 
-#include "EnhancedIdentityLibrary.h"
+#include "Libraries/EnhancedIdentityLibrary.h"
 
 #include "EnhancedOnlineRequests.h"
-#include "EnhancedSessionsLibrary.h"
+#include "Libraries/EnhancedSessionsLibrary.h"
 #include "GameFramework/GameModeBase.h"
 #include "GameFramework/GameSession.h"
 #include "Kismet/GameplayStatics.h"

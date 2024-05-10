@@ -21,7 +21,7 @@ class UEnhancedOnlineSessionsSubsystem;
  * Delegate for when a request failed
  * @param Reason	The reason why the request failed
  */
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnRequestFailedWithLog, const FString& /* Reason */);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnEnhancedRequestFailedWithLog, const FString& /* Reason */);
 
 /**
  * Base request class that manages garbage collection, used to communicate with the online service
@@ -68,7 +68,7 @@ public:
 	int32 LocalUserIndex;
 
 	/** Native delegate for when the request fails */
-	FOnRequestFailedWithLog OnRequestFailedDelegate;
+	FOnEnhancedRequestFailedWithLog OnRequestFailedDelegate;
 
 protected:
 	friend UEnhancedOnlineSessionsSubsystem;
@@ -81,7 +81,7 @@ protected:
  * Delegate for when a session is created
  * @param LocalUserIndex	The index of the local user who created the session request
  */
-DECLARE_MULTICAST_DELEGATE_TwoParams(FOnCreateSessionCompleted, int32 /* Local User Index */ , const FName /* Session Name */);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnEnhancedCreateSessionCompleted, int32 /* Local User Index */ , const FName /* Session Name */);
 
 /*
  * Base session request class, used to create a session
@@ -155,7 +155,7 @@ public:
 	TArray<FString> TravelURLOperators;
 	
 	/** Native delegate for when the session is created */
-	FOnCreateSessionCompleted OnCreateSessionCompleted;
+	FOnEnhancedCreateSessionCompleted OnCreateSessionCompleted;
 
 public:
 	/** Returns the maximum number of players that can join the session */
@@ -328,7 +328,7 @@ public:
  * Delegate for when a user logs in
  * @param LocalUserIndex	The index of the local user who logged in
  */
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnUserLoginCompleted, int32 /* Local User Index */);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnEnhancedUserLoginCompleted, int32 /* Local User Index */);
 
 /**
  * Request class used to log in a user
@@ -352,7 +352,7 @@ public:
 	FString UserId;
 
 	/** Native delegate for when the user logs in */
-	FOnUserLoginCompleted OnUserLoginCompleted;
+	FOnEnhancedUserLoginCompleted OnUserLoginCompleted;
 
 public:
 	virtual void ConstructRequest() override
@@ -389,7 +389,7 @@ class UEnhancedOnlineRequest_LogoutUser : public UEnhancedOnlineRequestBase
 
 public:
 	/** Native delegate for when the user logs in */
-	FOnUserLoginCompleted OnUserLogoutCompleted;
+	FOnEnhancedUserLoginCompleted OnUserLogoutCompleted;
 
 public:
 	virtual void ConstructRequest() override
@@ -474,7 +474,7 @@ public:
  * Delegate for when a find online sessions request is completed
  * @param SearchResults	The search results found online
  */
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnFindOnlineSessionsCompleted, const TArray<UEnhancedSessionSearchResult*> /* Search Results */);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnEnhancedFindOnlineSessionsCompleted, const TArray<UEnhancedSessionSearchResult*> /* Search Results */);
 
 /**
  * Request class used to find online sessions
@@ -506,7 +506,7 @@ public:
 	TArray<TObjectPtr<UEnhancedSessionSearchResult>> SearchResults;
 
 	/** Native delegate for when the request is completed */
-	FOnFindOnlineSessionsCompleted OnFindOnlineSessionsCompleted;
+	FOnEnhancedFindOnlineSessionsCompleted OnFindOnlineSessionsCompleted;
 
 public:
 	virtual void ConstructRequest() override
@@ -532,6 +532,11 @@ private:
 	friend UEnhancedOnlineSessionsSubsystem;
 	IOnlineSessionPtr Sessions;
 };
+
+/**
+ * Request class used to find a friend's online session
+ */
+
 
 /**
  * Request class used to join an online session
@@ -615,4 +620,59 @@ public:
 	}
 
 	virtual ~FEnhancedOnlineSearchSettings() {}
+};
+
+/**
+ * Delegate for when a request to get the friend's list is completed
+ * @param FriendsList	The friend's list found online
+ */
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnEnhancedGetFriendsListCompleted, const TArray<FEnhancedBlueprintFriendInfo>& /* Friends List */);
+
+/**
+ * Request object used to get the friend's list of the local user
+ */
+UCLASS()
+class UEnhancedOnlineRequest_GetFriendsList : public UEnhancedOnlineRequestBase
+{
+	GENERATED_BODY()
+
+public:
+	/** Whether to filter only online friends */
+	UPROPERTY(BlueprintReadWrite, Category = "Online|Request")
+	uint8 bFilterOnlyOnlineFriends:1 = false;
+
+	/** Whether to filter only friends playing the same game */
+	UPROPERTY(BlueprintReadWrite, Category = "Online|Request")
+	uint8 bFilterOnlyInGameFriends:1 = false;
+
+	/** Found friends will be valid after the request is completed */
+	UPROPERTY(BlueprintReadOnly, Category = "Online|Request|Friends")
+	TArray<FEnhancedBlueprintFriendInfo> FriendsList;
+
+	/** Native delegate for when the request is completed */
+	FOnEnhancedGetFriendsListCompleted OnGetFriendsListCompleted;
+
+public:
+	virtual void ConstructRequest() override
+	{
+		Super::ConstructRequest();
+
+		Friends = OnlineSub->GetFriendsInterface();
+		check(Friends);
+	}
+
+	virtual void InvalidateRequest() override
+	{
+		Super::InvalidateRequest();
+
+		if (OnGetFriendsListCompleted.IsBound())
+		{
+			OnGetFriendsListCompleted.RemoveAll(this);
+			OnGetFriendsListCompleted.Clear();
+		}
+	}
+
+private:
+	friend UEnhancedOnlineSessionsSubsystem;
+	IOnlineFriendsPtr Friends;
 };
