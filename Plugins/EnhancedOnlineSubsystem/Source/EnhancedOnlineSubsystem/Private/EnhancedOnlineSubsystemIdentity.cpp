@@ -4,6 +4,7 @@
 #include "EnhancedOnlineSessionsSubsystem.h"
 #include "EnhancedOnlineSubsystem.h"
 #include "Kismet/GameplayStatics.h"
+#include "Engine/LocalPlayer.h"
 
 void UEnhancedOnlineSessionsSubsystem::LoginOnlineUser(UEnhancedOnlineRequest_LoginUser* Request)
 {

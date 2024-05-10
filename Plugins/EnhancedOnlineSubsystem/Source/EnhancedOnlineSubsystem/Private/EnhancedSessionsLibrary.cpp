@@ -42,7 +42,7 @@ FString UEnhancedSessionsLibrary::GetSessionFriendlyName(UEnhancedSessionSearchR
 
 UEnhancedOnlineRequest_CreateSession* UEnhancedSessionsLibrary::ConstructOnlineHostSessionRequest(
 	UObject* WorldContextObject, const EEnhancedSessionOnlineMode OnlineMode, const int32 MaxPlayerCount,
-	FPrimaryAssetId MapId, const FString FriendlyName, const FString SearchKeyword, const bool bUseLobbiesIfAvailable,
+	FPrimaryAssetId MapId, TArray<FString> TravelURLOperators, const FString FriendlyName, const FString SearchKeyword, const bool bUseLobbiesIfAvailable,
 	const bool bUseVoiceChatIfAvailable, const FString GameModeAdvertisementName, const bool bIsPresence, const bool bAllowJoinInProgress,
 	const int32 LocalUserIndex, const bool bInvalidateOnCompletion, FBPOnRequestFailedWithLog OnFailedDelegate)
 {
@@ -54,6 +54,7 @@ UEnhancedOnlineRequest_CreateSession* UEnhancedSessionsLibrary::ConstructOnlineH
 	Request->OnlineMode = OnlineMode;
 	Request->MaxPlayerCount = MaxPlayerCount;
 	Request->MapId = MapId;
+	Request->TravelURLOperators = TravelURLOperators;
 	Request->FriendlyName = FriendlyName;
 	Request->SearchKeyword = SearchKeyword;
 	Request->bUseLobbiesIfAvailable = bUseLobbiesIfAvailable;
@@ -152,7 +153,7 @@ UEnhancedOnlineRequest_JoinSession* UEnhancedSessionsLibrary::ConstructOnlineJoi
 	return Request;
 }
 
-UEnhancedOnlineRequest_StartSession* UEnhancedSessionsLibrary::ContstructOnlineStartSessionRequest(
+UEnhancedOnlineRequest_StartSession* UEnhancedSessionsLibrary::ConstructOnlineStartSessionRequest(
 	UObject* WorldContextObject, const bool bInvalidateOnCompletion,
 	FBPOnStartSessionRequestSucceeded OnSucceededDelegate, FBPOnRequestFailedWithLog OnFailedDelegate)
 {

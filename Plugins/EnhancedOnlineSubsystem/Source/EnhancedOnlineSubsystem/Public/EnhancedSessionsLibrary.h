@@ -94,6 +94,7 @@ public:
 	 * @param OnlineMode					The online mode of the session
 	 * @param MaxPlayerCount				The maximum number of players allowed in the session
 	 * @param MapId							The map to use for the session
+	 * @param TravelURLOperators			The travel URL operators that will be appended to the travel URL
 	 * @param FriendlyName					The friendly name of the session, used to display in the UI
 	 * @param SearchKeyword					The search keyword for the session, used to find the session. Multiple sessions can share the same keyword
 	 * @param bUseLobbiesIfAvailable		Whether to use lobbies if available
@@ -115,6 +116,7 @@ public:
 		const EEnhancedSessionOnlineMode OnlineMode,
 		const int32 MaxPlayerCount,
 		UPARAM(meta = (AllowedTypes = "Map")) FPrimaryAssetId MapId,
+		TArray<FString> TravelURLOperators,
 		const FString FriendlyName,
 		const FString SearchKeyword,
 		const bool bUseLobbiesIfAvailable,
@@ -219,7 +221,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Online|EnhancedSessions|Sessions", meta =
 		(WorldContext = "WorldContextObject", Keywords = "Make, Create, New", DisplayName = "Construct Online Start Session Request",
 			AdvancedDisplay = "bInvalidateOnCompletion", bInvalidateOnCompletion = "true"))
-	static UPARAM(DisplayName = "Request") UEnhancedOnlineRequest_StartSession* ContstructOnlineStartSessionRequest(
+	static UPARAM(DisplayName = "Request") UEnhancedOnlineRequest_StartSession* ConstructOnlineStartSessionRequest(
 		UObject* WorldContextObject,
 		const bool bInvalidateOnCompletion,
 		FBPOnStartSessionRequestSucceeded OnSucceededDelegate,

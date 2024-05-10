@@ -12,9 +12,7 @@ public class EnhancedOnlineSubsystem : ModuleRules
 		{
 			"Core",
 			"OnlineSubsystem",
-			"OnlineSubsystemUtils",
-			"OnlineSubsystemEOS",
-			"OnlineSubsystemSteam"
+			"OnlineSubsystemUtils"
 		});
 			
 		

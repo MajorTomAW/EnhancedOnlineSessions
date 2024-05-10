@@ -9,6 +9,7 @@
 #include "OnlineSubsystemUtils.h"
 #include "OnlineSubsystem.h"
 #include "Engine/AssetManager.h"
+#include "AssetRegistry/AssetData.h"
 #include "Online/OnlineSessionNames.h"
 #include "FindSessionsCallbackProxy.h"
 #include "EnhancedOnlineRequests.generated.h"
@@ -148,6 +149,10 @@ public:
 	/** Whether to allow players to join while the session is in progress */
 	UPROPERTY(BlueprintReadWrite, Category = "Online|Request")
 	bool bAllowJoinInProgress;
+
+	/** Additional travel URL operators that will be appended to the travel URL */
+	UPROPERTY(BlueprintReadWrite, Category = "Online|Request")
+	TArray<FString> TravelURLOperators;
 	
 	/** Native delegate for when the session is created */
 	FOnCreateSessionCompleted OnCreateSessionCompleted;
@@ -169,6 +174,11 @@ public:
 		if (OnlineMode != EEnhancedSessionOnlineMode::Offline)
 		{
 			TravelURL.Op.Add(TEXT("?listen"));
+		}
+
+		for (const FString& Op : TravelURLOperators)
+		{
+			TravelURL.Op.Add(Op);
 		}
 
 		return TravelURL;

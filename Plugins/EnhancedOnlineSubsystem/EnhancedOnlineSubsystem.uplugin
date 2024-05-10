@@ -1,13 +1,14 @@
-﻿{
+{
 	"FileVersion": 3,
 	"Version": 1,
-	"VersionName": "1.0",
+	"VersionName": "0.9",
 	"FriendlyName": "Enhanced Online Subsystem",
-	"Description": "",
+	"Description": "Plugin used to manage an Online Subsystem.",
 	"Category": "Online",
 	"CreatedBy": "MajorT",
-	"CreatedByURL": "",
-	"DocsURL": "",
+	"CreatedByURL": "https://discord.com/users/959875236403220490",
+	"DocsURL": "https://github.com/MajorTomAW/EnhancedOnlineSessions",
+	"SupportURL": "https://discord.com/users/959875236403220490",
 	"MarketplaceURL": "",
 	"CanContainContent": false,
 	"IsBetaVersion": false,
@@ -33,10 +34,9 @@
 		{
 			"Name": "OnlineSubsystemUtils",
 			"Enabled": true
-		},
-		{
-			"Name": "OnlineSubsystemEOS",
-			"Enabled": true
 		}
+	],
+	"TargetPlatforms": [
+		"Win64"
 	]
 }
