@@ -149,7 +149,7 @@ void UEnhancedOnlineSessionsSubsystem::FindFriendOnlineSessionsInternal(ULocalPl
 
 	if (!bCalled)
 	{
-		UE_LOG(LogEnhancedSubsystem, Error, TEXT("Find Friend Online Sessions failed to call the find friend session function: NetId: %s, LocalUserIndex: %d"), *Request->FriendId.GetUniqueNetId()->ToString(), LocalPlayer->GetControllerId());
+		UE_LOG(LogEnhancedSubsystem, Error, TEXT("Find Friend Online Sessions failed to call the find friend session function: NetId: %s, LocalUserIndex: %d. The used online service may not support this."), *Request->FriendId.GetUniqueNetId()->ToString(), LocalPlayer->GetControllerId());
 		Request->OnRequestFailedDelegate.Broadcast(TEXT("Find Friend Online Sessions failed to call the find friend session function."));
 	}
 }
