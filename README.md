@@ -149,7 +149,7 @@ Rest of the documenation is currently in progress...
 <a name="start-session"></a>
 # 2.2 Start Session
 Starting a session basically sets its current state to ``InProgress`` meaning the the session is now registered as in progress in the online subsystem you are using.
-This also blocks other players from joining if you disabled the option ``Allow Join in Progress`` when hosting the session.  
+This also blocks other players from joining if you disabled the option ``Allow Join in Progress`` in [Host Online Sessions.](#online-sessions)  
   
 To start the session you would need to call the ``Start Online Session`` function which you can find in the ``Enhanced Online Subsystem``
 
@@ -167,11 +167,11 @@ This takes in a ``Start Session Request.``
 
 As you can see this request does not take in any additional inputs, since you are only able to start the current session you are in.  
 You could use the ``On Succeeded Delegate`` to start the match and a timer for example.  
-> :memo: You dont **have** to start a session to start the match. Starting a session is more like a helper which the engine provides to help you doing the session management. Meaning that your gamewould still work fine if you dont start your session.  
+> :memo: You dont **have** to start a session to start the match. Starting a session is more like a helper which the engine provides to help you doing the session management. Meaning that your game would still work fine if you dont start your session.  
 
 <a name="find-sessions"></a>
 # 2.3 Find Sessions
-The most basic form of searching for sessions is the classic server browser that shows all available games and allows the player to filter those based on the type of game they want to play and then choose one to join one of the sessions that match those criteria.
+The most basic form of searching for sessions is the classic server browser that shows all available games and allows the player to filter those based on the type of game they want to play and then choose one to join one of the sessions that match those criteria.  
 To find these sessions you would need to call the ``Find Online Sessions`` function which you can find in the ``Enhanced Online Subsystem.``   
 
 ![image](https://github.com/MajorTomAW/EnhancedOnlineSessions/assets/96875345/d35d48f8-05ee-444f-b3a1-69f116bbca1d)
