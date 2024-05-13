@@ -112,29 +112,3 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Friend Presence Info")
 	FString StatusString;
 };
-
-/**
- * Blueprint exposed struct for the enhanced friend info
- */
-USTRUCT(BlueprintType)
-struct FEnhancedBlueprintFriendInfo
-{
-	GENERATED_BODY()
-
-public:
-	/** The display name of the friend */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Friend Info")
-	FString DisplayName;
-
-	/** The real name of the friend. Can often be empty */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Friend Info")
-	FString RealName;
-
-	/** The unique net id of the friend */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Friend Info")
-	FUniqueNetIdRepl UniqueNetId;
-
-	/** The online presence info of the friend */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Friend Info")
-	FEnhancedOnlineFriendPresenceInfo PresenceInfo;
-};

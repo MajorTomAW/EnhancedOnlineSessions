@@ -94,6 +94,11 @@ public:
 		Sessions = OnlineSub->GetSessionInterface();
 		check(Sessions);
 	}
+
+	virtual void InvalidateRequest() override
+	{
+		Super::InvalidateRequest();
+	}
 	//~ End UEnhancedOnlineRequestBase Interface
 
 protected:
@@ -186,12 +191,12 @@ public:
 
 		if (OnlineMode == EEnhancedSessionOnlineMode::LAN)
 		{
-			TravelURL.Op.Add(TEXT("?bIsLanMatch"));
+			TravelURL.Op.Add(TEXT("bIsLanMatch"));
 		}
 
 		if (OnlineMode != EEnhancedSessionOnlineMode::Offline)
 		{
-			TravelURL.Op.Add(TEXT("?listen"));
+			TravelURL.Op.Add(TEXT("listen"));
 		}
 
 		for (const FString& Op : TravelURLOperators)
@@ -589,89 +594,5 @@ public:
 	}
 
 	virtual ~FEnhancedOnlineSearchSettings() {}
-};
-
-/**
- * Delegate for when a request to get the friend's list is completed
- * @param FriendsList	The friend's list found online
- */
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnEnhancedGetFriendsListCompleted, const TArray<FEnhancedBlueprintFriendInfo>& /* Friends List */);
-
-/**
- * Request object used to get the friend's list of the local user
- */
-UCLASS()
-class UEnhancedOnlineRequest_GetFriendsList : public UEnhancedOnlineRequestBase
-{
-	GENERATED_BODY()
-
-public:
-	/** Whether to filter only online friends */
-	UPROPERTY(BlueprintReadWrite, Category = "Online|Request")
-	uint8 bFilterOnlyOnlineFriends:1 = false;
-
-	/** Whether to filter only friends playing the same game */
-	UPROPERTY(BlueprintReadWrite, Category = "Online|Request")
-	uint8 bFilterOnlyInGameFriends:1 = false;
-
-	/** Found friends will be valid after the request is completed */
-	UPROPERTY(BlueprintReadOnly, Category = "Online|Request|Friends")
-	TArray<FEnhancedBlueprintFriendInfo> FriendsList;
-
-	/** Native delegate for when the request is completed */
-	FOnEnhancedGetFriendsListCompleted OnGetFriendsListCompleted;
-
-public:
-	virtual void ConstructRequest() override
-	{
-		Super::ConstructRequest();
-
-		Friends = OnlineSub->GetFriendsInterface();
-		check(Friends);
-	}
-
-	virtual void InvalidateRequest() override
-	{
-		Super::InvalidateRequest();
-
-		if (OnGetFriendsListCompleted.IsBound())
-		{
-			OnGetFriendsListCompleted.RemoveAll(this);
-			OnGetFriendsListCompleted.Clear();
-		}
-	}
-
-private:
-	friend UEnhancedOnlineSessionsSubsystem;
-	IOnlineFriendsPtr Friends;
-};
-
-/**
- * Request object used to find a friend's online session
- */
-UCLASS()
-class UEnhancedOnlineRequest_FindFriendSession : public UEnhancedOnlineSessionRequestBase
-{
-	GENERATED_BODY()
-
-public:
-	/** List of friend ids to search for */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Online|Request")
-	FUniqueNetIdRepl FriendId;
-
-	/** Native delegate for when the request is completed */
-	FOnEnhancedFindOnlineSessionsCompleted OnFindFriendSessionCompleted;
-
-public:
-	virtual void InvalidateRequest() override
-	{
-		Super::InvalidateRequest();
-
-		if (OnFindFriendSessionCompleted.IsBound())
-		{
-			OnFindFriendSessionCompleted.RemoveAll(this);
-			OnFindFriendSessionCompleted.Clear();
-		}
-	}
 };
 

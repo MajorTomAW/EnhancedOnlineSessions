@@ -56,21 +56,7 @@ public:
 	virtual void LogoutOnlineUser(UEnhancedOnlineRequest_LogoutUser* Request);
 #pragma endregion
 
-#pragma region online_friends
-	/**
-	 * Gets the friends list of the online user.
-	 * @param Request	The request object that contains the settings for getting the friends list.
-	 */
-	UFUNCTION(BlueprintCallable, Category = "Online|EnhancedSessions|Friends")
-	virtual void GetFriendsList(UEnhancedOnlineRequest_GetFriendsList* Request);
 
-	/**
-	 * Finds the online sessions of the friends of the online user.
-	 * @param Request	The request object that contains the settings for finding the friends' online sessions.
-	 */
-	UFUNCTION(BlueprintCallable, Category = "Online|EnhancedSessions|Friends")
-	virtual void FindFriendOnlineSessions(UEnhancedOnlineRequest_FindFriendSession* Request);
-#pragma endregion
 	
 #pragma region online_sessions
 	/**
@@ -113,14 +99,10 @@ protected:
 	FDelegateHandle JoinSessionDelegateHandle;
 	FDelegateHandle StartSessionDelegateHandle;
 
-	/** Online Friends */
-	virtual void GetFriendsListInternal(ULocalPlayer* LocalPlayer, UEnhancedOnlineRequest_GetFriendsList* Request);
-	virtual void FindFriendOnlineSessionsInternal(ULocalPlayer* LocalPlayer, UEnhancedOnlineRequest_FindFriendSession* Request);
+
 
 	FDelegateHandle FindFriendSessionsDelegateHandle;
 
-	virtual void HandleGetFriendsListComplete(int32 LocalUserNum, bool bWasSuccessful, const FString& ListName, const FString& ErrorString);
-	virtual void HandleFindFriendOnlineSessionsComplete(int32 LocalUserNum, bool bWasSuccessful, const TArray<FOnlineSessionSearchResult>& SessionInfo);
 
 	virtual void HandleHostOnlineLobbyComplete(FName SessionName, bool bWasSuccessful);
 	virtual void HandleHostOnlineSessionComplete(FName SessionName, bool bWasSuccessful);
@@ -162,13 +144,7 @@ private:
 	UPROPERTY()
 	TObjectPtr<UEnhancedOnlineRequest_StartSession> PendingStartSessionRequest;
 
-	/** The request object for the pending find sessions */
-	UPROPERTY()
-	TObjectPtr<UEnhancedOnlineRequest_GetFriendsList> PendingGetFriendsListRequest;
 
-	/** The request object for the pending find friend session */
-	UPROPERTY()
-	TObjectPtr<UEnhancedOnlineRequest_FindFriendSession> PendingFindFriendSessionRequest;
 
 	/** Session settings for the pending session */
 	TSharedPtr<FEnhancedOnlineSessionSettings> SessionSettings;
