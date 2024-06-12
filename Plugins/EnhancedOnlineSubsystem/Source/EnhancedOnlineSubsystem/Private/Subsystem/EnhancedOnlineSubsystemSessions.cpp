@@ -95,7 +95,6 @@ void UEnhancedOnlineSessionsSubsystem::HostOnlineLobbyInternal(ULocalPlayer* Loc
 		FSessionSettings& UserSettings = SessionSettings->MemberSettings.Add(UserId.ToSharedRef(), FSessionSettings());
 		UserSettings.Add(SETTING_GAMEMODE, FOnlineSessionSetting(FString("GameSession"), EOnlineDataAdvertisementType::ViaOnlineService));
 		
-
 		PendingSessionRequest = Request;
 
 		UE_LOG(LogEnhancedSubsystem, Log, TEXT("Hosting lobby with %d players..."), Request->GetMaxPlayers());
